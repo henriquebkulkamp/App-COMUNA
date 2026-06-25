@@ -35,9 +35,36 @@ function criarAuth(): JWT {
   });
 }
 
+// ─── Cache do doc (evita loadInfo() a cada requisição) ───────
+// No Vercel, instâncias Lambda ficam "quentes" por alguns minutos.
+// Cachear o doc reduz drasticamente as chamadas de leitura à API.
+let _docCache: GoogleSpreadsheet | null = null;
+let _docCacheExpiry = 0;
+
+// ─── Retry com backoff para erro 429 (quota excedida) ────────
+async function comRetry<T>(fn: () => Promise<T>, tentativas = 4): Promise<T> {
+  for (let i = 0; i < tentativas; i++) {
+    try {
+      return await fn();
+    } catch (e: unknown) {
+      const msg = String((e as Error)?.message ?? "");
+      const is429 = msg.includes("429") || msg.includes("Quota");
+      if (is429 && i < tentativas - 1) {
+        await new Promise((r) => setTimeout(r, (i + 1) * 2000)); // 2s, 4s, 6s
+        continue;
+      }
+      throw e;
+    }
+  }
+  throw new Error("Todas as tentativas falharam");
+}
+
 // ─── Conexão com a planilha ──────────────────────────────────
 // Analogia: como abrir um arquivo Excel com openpyxl.load_workbook(path)
 async function abrirPlanilha(): Promise<GoogleSpreadsheet> {
+  const agora = Date.now();
+  if (_docCache && agora < _docCacheExpiry) return _docCache;
+
   const sheetId = process.env.GOOGLE_SHEET_ID;
   if (!sheetId) {
     throw new Error("Variável GOOGLE_SHEET_ID não encontrada no .env.local");
@@ -45,7 +72,10 @@ async function abrirPlanilha(): Promise<GoogleSpreadsheet> {
 
   const auth = criarAuth();
   const doc = new GoogleSpreadsheet(sheetId, auth);
-  await doc.loadInfo(); // carrega metadados (nome das abas, etc.)
+  await comRetry(() => doc.loadInfo()); // carrega metadados (nome das abas, etc.)
+
+  _docCache = doc;
+  _docCacheExpiry = agora + 5 * 60_000; // cache por 5 minutos
   return doc;
 }
 
@@ -63,7 +93,7 @@ export async function buscarProdutosDaPlanilha(): Promise<Produto[]> {
 
   // getRows() retorna todas as linhas (exceto o cabeçalho)
   // Analogia: df.to_dict('records') — lista de dicionários, um por linha
-  const linhas = await aba.getRows();
+  const linhas = await comRetry(() => aba.getRows());
 
   // Converte cada linha para o formato Produto que o app espera
   // Analogia Python: [converter_linha(l) for l in linhas if l['id']]
@@ -108,7 +138,7 @@ export async function descontarEstoque(
   const aba = doc.sheetsByTitle["Estoque"];
   if (!aba) return;
 
-  const linhas = await aba.getRows();
+  const linhas = await comRetry(() => aba.getRows());
 
   // Processa cada item do pedido sequencialmente
   for (const item of itens) {
@@ -125,7 +155,7 @@ export async function descontarEstoque(
       linha.set("emEstoque", false);
     }
 
-    await linha.save();
+    await comRetry(() => linha.save());
   }
 }
 
@@ -144,7 +174,7 @@ export async function atualizarQuantidadeNaPlanilha(
   const aba = doc.sheetsByTitle["Estoque"];
   if (!aba) throw new Error('Aba "Estoque" não encontrada na planilha.');
 
-  const linhas = await aba.getRows();
+  const linhas = await comRetry(() => aba.getRows());
   const linha = linhas.find((l) => l.get("id") === produtoId);
   if (!linha) throw new Error(`Produto "${produtoId}" não encontrado na planilha.`);
 
@@ -164,7 +194,7 @@ export async function atualizarPrecoNaPlanilha(
   const aba = doc.sheetsByTitle["Estoque"];
   if (!aba) throw new Error('Aba "Estoque" não encontrada na planilha.');
 
-  const linhas = await aba.getRows();
+  const linhas = await comRetry(() => aba.getRows());
   const linha = linhas.find((l) => l.get("id") === produtoId);
   if (!linha) throw new Error(`Produto "${produtoId}" não encontrado na planilha.`);
 
@@ -181,7 +211,7 @@ export async function atualizarEmEstoqueNaPlanilha(
   const aba = doc.sheetsByTitle["Estoque"];
   if (!aba) throw new Error('Aba "Estoque" não encontrada na planilha.');
 
-  const linhas = await aba.getRows();
+  const linhas = await comRetry(() => aba.getRows());
   const linha = linhas.find((l) => l.get("id") === produtoId);
   if (!linha) throw new Error(`Produto "${produtoId}" não encontrado na planilha.`);
 
@@ -198,7 +228,7 @@ export async function atualizarUnidadeNaPlanilha(
   const aba = doc.sheetsByTitle["Estoque"];
   if (!aba) throw new Error('Aba "Estoque" não encontrada na planilha.');
 
-  const linhas = await aba.getRows();
+  const linhas = await comRetry(() => aba.getRows());
   const linha = linhas.find((l) => l.get("id") === produtoId);
   if (!linha) throw new Error(`Produto "${produtoId}" não encontrado na planilha.`);
 
@@ -218,7 +248,7 @@ export async function atualizarCestaNaPlanilha(
   const aba = doc.sheetsByTitle["Estoque"];
   if (!aba) throw new Error('Aba "Estoque" não encontrada na planilha.');
 
-  const linhas = await aba.getRows();
+  const linhas = await comRetry(() => aba.getRows());
   const linha = linhas.find((l) => l.get("id") === produtoId);
   if (!linha) throw new Error(`Produto "${produtoId}" não encontrado na planilha.`);
 
