@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { atualizarPrecoNaPlanilha } from "@/lib/google-sheets";
+import { atualizarPrecoNaPlanilha, invalidarCacheProdutos } from "@/lib/google-sheets";
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -13,6 +13,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     await atualizarPrecoNaPlanilha(produtoId, preco);
+    invalidarCacheProdutos();
     return NextResponse.json({ sucesso: true });
   } catch (erro) {
     console.error("[PATCH /api/admin/preco] Erro:", erro);

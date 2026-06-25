@@ -79,10 +79,22 @@ async function abrirPlanilha(): Promise<GoogleSpreadsheet> {
   return doc;
 }
 
+// ─── Cache de linhas (protege quota após remover revalidate da rota) ─────────
+let _produtosCache: Produto[] | null = null;
+let _produtosCacheExpiry = 0;
+
+export function invalidarCacheProdutos() {
+  _produtosCache = null;
+  _produtosCacheExpiry = 0;
+}
+
 // ─── Leitura de Produtos ─────────────────────────────────────
 // Lê todas as linhas da aba "Estoque" e converte para objetos Produto.
 // Analogia Python: df = pd.read_excel('planilha.xlsx', sheet_name='Estoque')
 export async function buscarProdutosDaPlanilha(): Promise<Produto[]> {
+  const agora = Date.now();
+  if (_produtosCache && agora < _produtosCacheExpiry) return _produtosCache;
+
   const doc = await abrirPlanilha();
 
   // Acessa a aba pelo nome exato — certifique-se que chama "Estoque" no Sheets
@@ -97,7 +109,7 @@ export async function buscarProdutosDaPlanilha(): Promise<Produto[]> {
 
   // Converte cada linha para o formato Produto que o app espera
   // Analogia Python: [converter_linha(l) for l in linhas if l['id']]
-  return linhas
+  const produtos = linhas
     .filter((linha) => linha.get("id")) // ignora linhas vazias
     .map((linha) => {
       const quantidade = parseInt(linha.get("quantidade") || "0", 10) || 0;
@@ -119,6 +131,10 @@ export async function buscarProdutosDaPlanilha(): Promise<Produto[]> {
         imagemUrl: linha.get("imagemUrl") || undefined,
       };
     });
+
+  _produtosCache = produtos;
+  _produtosCacheExpiry = agora + 30_000; // 30 segundos
+  return produtos;
 }
 
 // ─── Desconto de Estoque ─────────────────────────────────────
