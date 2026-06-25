@@ -274,19 +274,23 @@ export async function salvarSolicitacoes({
 
   let aba = doc.sheetsByTitle["Solicitações"];
   if (!aba) {
-    aba = await doc.addSheet({
-      title: "Solicitações",
-      headerValues: ["timestamp", "numeroPedido", "nomeCliente", "celular", "produtosSolicitados"],
-    });
+    aba = await comRetry(() =>
+      doc.addSheet({
+        title: "Solicitações",
+        headerValues: ["timestamp", "numeroPedido", "nomeCliente", "celular", "produtosSolicitados"],
+      })
+    );
   }
 
-  await aba.addRow({
-    timestamp: new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }),
-    numeroPedido,
-    nomeCliente,
-    celular,
-    produtosSolicitados,
-  });
+  await comRetry(() =>
+    aba.addRow({
+      timestamp: new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }),
+      numeroPedido,
+      nomeCliente,
+      celular,
+      produtosSolicitados,
+    })
+  );
 }
 
 // ─── Tipos do Pedido ─────────────────────────────────────────
