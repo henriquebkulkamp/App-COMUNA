@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: Inter, system-ui, sans-serif;
+  }
+
+  body {
+    @apply bg-creme text-gray-800;
+  }
+
+  /* Remove a seta padrão dos inputs number */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
+
+@layer components {
+  /* Botão primário da cooperativa */
+  .btn-primary {
+    @apply bg-verde-600 hover:bg-verde-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors duration-200 active:scale-95;
+  }
+
+  /* Botão secundário */
+  .btn-secondary {
+    @apply bg-terra-200 hover:bg-terra-300 text-terra-800 font-semibold py-3 px-6 rounded-xl transition-colors duration-200;
+  }
+
+  /* Card de produto */
+  .card-produto {
+    @apply bg-white rounded-2xl shadow-sm border border-verde-100 p-4 flex flex-col gap-3 hover:shadow-md transition-shadow duration-200;
+  }
+
+  /* Badge de categoria */
+  .badge-categoria {
+    @apply text-xs font-medium px-2 py-0.5 rounded-full bg-verde-100 text-verde-700;
+  }
+}

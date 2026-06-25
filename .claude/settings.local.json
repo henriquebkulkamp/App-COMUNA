@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(npm run *)",
+      "Bash(py --version)",
+      "Bash(where python*)",
+      "mcp__Claude_Preview__preview_start",
+      "PowerShell(Stop-Process -Id 12248 -Force)"
+    ]
+  }
+}
