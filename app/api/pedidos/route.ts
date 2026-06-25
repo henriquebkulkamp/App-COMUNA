@@ -61,24 +61,19 @@ export async function POST(request: NextRequest) {
       itens: itensTexto,
     });
 
-    // Salva produtos solicitados na aba separada, se houver
-    if (produtosSolicitados?.trim()) {
-      salvarSolicitacoes({ nomeCliente, celular, numeroPedido, produtosSolicitados }).catch(
-        (erro) => console.error("[POST /api/pedidos] Erro ao salvar solicitações:", erro)
-      );
-    }
-
-    // Desconta o estoque de cada item pedido.
-    // Se algum produto zerar, emEstoque vira FALSE automaticamente na planilha.
-    // Roda em paralelo com o retorno — não bloqueia o cliente.
-    descontarEstoque(
-      (itens as ItemCarrinho[]).map((item) => ({
-        produtoId: item.produto.id,
-        quantidadePedida: item.quantidade,
-      }))
-    ).catch((erro) =>
-      console.error("[POST /api/pedidos] Erro ao descontar estoque:", erro)
-    );
+    // Salva solicitações e desconta estoque em paralelo, aguardando ambos
+    // antes de responder — no Vercel, operações sem await são cortadas ao retornar.
+    await Promise.allSettled([
+      produtosSolicitados?.trim()
+        ? salvarSolicitacoes({ nomeCliente, celular, numeroPedido, produtosSolicitados })
+        : Promise.resolve(),
+      descontarEstoque(
+        (itens as ItemCarrinho[]).map((item) => ({
+          produtoId: item.produto.id,
+          quantidadePedida: item.quantidade,
+        }))
+      ),
+    ]);
 
     return NextResponse.json({ sucesso: true, numeroPedido });
   } catch (erro) {
