@@ -19,51 +19,23 @@ function normalizarUnidade(unidade: string): string {
   return unidade;
 }
 
-// Emoji de categoria — para dar identidade visual a cada grupo de produto
-// Analogia: é como um dict Python que mapeia categoria → emoji
-const EMOJI_CATEGORIA: Record<string, string> = {
-  Frutas: "🍎",
-  "Verduras e Legumes": "🥦",
-  "Ervas e Temperos": "🌿",
-  Proteínas: "🥚",
-  "Grãos e Cereais": "🌾",
-  "Derivados e Processados": "🫙",
-  Bebidas: "🧃",
-  "Pães e Panificação": "🍞",
-  "Mel e Apícolas": "🍯",
-  Cestas: "🧺",
-};
-
 export default function CardProduto({ produto }: CardProdutoProps) {
   const { adicionar, diminuir, estaNoCarrinho, quantidadeNoCarrinho } =
     useCarrinho();
 
   const noCarrinho = estaNoCarrinho(produto.id);
   const quantidade = quantidadeNoCarrinho(produto.id);
-  const emoji = EMOJI_CATEGORIA[produto.categoria] ?? "🌱";
 
   return (
     <div className="card-produto">
-      {/* Ícone e categoria */}
-      <div className="flex items-start justify-between gap-2">
-        <div className="w-12 h-12 rounded-xl bg-verde-50 flex items-center justify-center text-2xl flex-shrink-0">
-          {produto.imagemUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={produto.imagemUrl}
-              alt={produto.nome}
-              className="w-full h-full object-cover rounded-xl"
-            />
-          ) : (
-            emoji
-          )}
-        </div>
+      {/* Categoria */}
+      <div className="flex items-start justify-end">
         <span className="badge-categoria">{produto.categoria}</span>
       </div>
 
-      {/* Nome e descrição */}
+      {/* Nome e descrição — nome em destaque, sem ícone */}
       <div>
-        <h3 className="font-semibold text-gray-800 text-sm leading-tight">
+        <h3 className="font-bold text-gray-800 text-base leading-tight">
           {produto.nome}
         </h3>
         {produto.descricao && (

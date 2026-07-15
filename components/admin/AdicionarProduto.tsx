@@ -45,8 +45,9 @@ export default function AdicionarProduto({ onFechar }: AdicionarProdutoProps) {
     descricao: "",
   });
   const [erro, setErro] = useState("");
+  const [salvando, setSalvando] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErro("");
 
@@ -63,12 +64,37 @@ export default function AdicionarProduto({ onFechar }: AdicionarProdutoProps) {
       categoria: form.categoria,
       descricao: form.descricao.trim() || undefined,
       emEstoque: true, // já ativa no estoque ao criar
+      quantidade: 0,
       naCestaGrande: false,
       naCestaPequena: false,
     };
 
-    adicionarProduto(novoProduto);
-    onFechar();
+    setSalvando(true);
+    try {
+      const res = await fetch("/api/admin/produto", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: novoProduto.id,
+          nome: novoProduto.nome,
+          preco: novoProduto.preco,
+          unidade: novoProduto.unidade,
+          categoria: novoProduto.categoria,
+          descricao: novoProduto.descricao,
+        }),
+      });
+      if (!res.ok) {
+        const dados = await res.json();
+        throw new Error(dados.erro || "Erro ao salvar na planilha");
+      }
+      // Só atualiza o estado local depois de confirmar que gravou na planilha
+      adicionarProduto(novoProduto);
+      onFechar();
+    } catch (erro) {
+      setErro(erro instanceof Error ? erro.message : "Falha ao adicionar o produto.");
+    } finally {
+      setSalvando(false);
+    }
   }
 
   return (
@@ -179,12 +205,13 @@ export default function AdicionarProduto({ onFechar }: AdicionarProdutoProps) {
             <button
               type="button"
               onClick={onFechar}
-              className="flex-1 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50"
+              disabled={salvando}
+              className="flex-1 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
             >
               Cancelar
             </button>
-            <button type="submit" className="flex-1 btn-primary">
-              Adicionar Produto
+            <button type="submit" disabled={salvando} className="flex-1 btn-primary disabled:opacity-60">
+              {salvando ? "Salvando..." : "Adicionar Produto"}
             </button>
           </div>
         </form>

@@ -36,12 +36,12 @@ const STORAGE_KEY = "comuna_loja_v1";
 // Analogia: cada action é como um método da classe Loja
 // ex: loja.toggle_estoque("abacate") → dispatch({ type: "TOGGLE_ESTOQUE", id: "abacate" })
 type Action =
-  | { type: "TOGGLE_ESTOQUE"; id: string }
   | { type: "TOGGLE_CESTA_GRANDE"; id: string }
   | { type: "TOGGLE_CESTA_PEQUENA"; id: string }
   | { type: "ATUALIZAR_PRECO"; id: string; novoPreco: number }
   | { type: "ATUALIZAR_UNIDADE"; id: string; novaUnidade: string }
   | { type: "ADICIONAR_PRODUTO"; produto: Produto }
+  | { type: "REMOVER_PRODUTO"; id: string }
   | { type: "ATUALIZAR_CONFIG_CESTA"; config: Partial<ConfigCestaSemana> }
   | { type: "CARREGAR_ESTADO"; estado: EstadoLoja }
   | { type: "CARREGAR_PRODUTOS_DA_API"; produtos: Produto[] }
@@ -60,15 +60,6 @@ function reducer(estado: EstadoLoja, action: Action): EstadoLoja {
     // (configCesta pode ter sido editada pela Elizete nessa sessão)
     case "CARREGAR_PRODUTOS_DA_API":
       return { ...estado, produtos: action.produtos };
-
-    case "TOGGLE_ESTOQUE":
-      // map() em Python: [p if p['id'] != id else {...p, 'emEstoque': not p['emEstoque']} for p in produtos]
-      return {
-        ...estado,
-        produtos: estado.produtos.map((p) =>
-          p.id === action.id ? { ...p, emEstoque: !p.emEstoque } : p
-        ),
-      };
 
     case "TOGGLE_CESTA_GRANDE":
       return {
@@ -118,6 +109,12 @@ function reducer(estado: EstadoLoja, action: Action): EstadoLoja {
         produtos: [...estado.produtos, action.produto],
       };
 
+    case "REMOVER_PRODUTO":
+      return {
+        ...estado,
+        produtos: estado.produtos.filter((p) => p.id !== action.id),
+      };
+
     case "ATUALIZAR_CONFIG_CESTA":
       return {
         ...estado,
@@ -141,12 +138,12 @@ const ESTADO_INICIAL: EstadoLoja = {
 interface LojaContextType {
   estado: EstadoLoja;
   carregandoProdutos: boolean; // true enquanto a API do Google Sheets está respondendo
-  toggleEstoque: (id: string) => void;
   toggleCestaGrande: (id: string) => void;
   toggleCestaPequena: (id: string) => void;
   atualizarPreco: (id: string, novoPreco: number) => void;
   atualizarUnidade: (id: string, novaUnidade: string) => void;
   adicionarProduto: (produto: Produto) => void;
+  removerProduto: (id: string) => void;
   atualizarQuantidade: (id: string, quantidade: number) => void;
   // Getters computados — como @property em Python
   produtosEmEstoque: Produto[];
@@ -202,10 +199,6 @@ export function LojaProvider({ children }: { children: ReactNode }) {
   }, [estado]);
 
   // ─── Funções expostas para os componentes ─────────────────
-  const toggleEstoque = useCallback(
-    (id: string) => dispatch({ type: "TOGGLE_ESTOQUE", id }),
-    []
-  );
   const toggleCestaGrande = useCallback(
     (id: string) => dispatch({ type: "TOGGLE_CESTA_GRANDE", id }),
     []
@@ -228,6 +221,10 @@ export function LojaProvider({ children }: { children: ReactNode }) {
     (produto: Produto) => dispatch({ type: "ADICIONAR_PRODUTO", produto }),
     []
   );
+  const removerProduto = useCallback(
+    (id: string) => dispatch({ type: "REMOVER_PRODUTO", id }),
+    []
+  );
   const atualizarQuantidade = useCallback(
     (id: string, quantidade: number) =>
       dispatch({ type: "ATUALIZAR_QUANTIDADE", id, quantidade }),
@@ -247,12 +244,12 @@ export function LojaProvider({ children }: { children: ReactNode }) {
       value={{
         estado,
         carregandoProdutos,
-        toggleEstoque,
         toggleCestaGrande,
         toggleCestaPequena,
         atualizarPreco,
         atualizarUnidade,
         adicionarProduto,
+        removerProduto,
         atualizarQuantidade,
         produtosEmEstoque,
         itenscestaGrande,

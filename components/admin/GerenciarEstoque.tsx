@@ -31,7 +31,7 @@ const CATEGORIAS: Categoria[] = [
 // é um produto e as células são editáveis inline.
 // ============================================================
 export default function GerenciarEstoque() {
-  const { estado, toggleEstoque, atualizarPreco, atualizarUnidade, atualizarQuantidade } = useLoja();
+  const { estado, atualizarPreco, atualizarUnidade, atualizarQuantidade, removerProduto } = useLoja();
   const [busca, setBusca] = useState("");
   const [categoriaFiltro, setCategoriaFiltro] = useState<Categoria | "Todos">(
     "Todos"
@@ -43,8 +43,29 @@ export default function GerenciarEstoque() {
   const [erroId, setErroId] = useState<string | null>(null);
   const [salvandoCampo, setSalvandoCampo] = useState<string | null>(null);
   const [erroCampo, setErroCampo] = useState<Record<string, string>>({});
-  const [salvandoDisponibilidade, setSalvandoDisponibilidade] = useState<Set<string>>(new Set());
   const [mostrarAdicionarProduto, setMostrarAdicionarProduto] = useState(false);
+  const [removendoId, setRemovendoId] = useState<string | null>(null);
+  const [confirmandoRemocao, setConfirmandoRemocao] = useState<string | null>(null);
+
+  // Remove o produto da planilha e, se confirmado pelo servidor, do estado local.
+  async function handleRemoverProduto(produtoId: string) {
+    setRemovendoId(produtoId);
+    try {
+      const res = await fetch("/api/admin/produto", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ produtoId }),
+      });
+      if (!res.ok) throw new Error("Falha ao remover");
+      removerProduto(produtoId);
+    } catch (erro) {
+      console.error("[GerenciarEstoque] Falha ao remover produto:", erro);
+      setErroId(produtoId);
+    } finally {
+      setRemovendoId(null);
+      setConfirmandoRemocao(null);
+    }
+  }
 
   // Salva a nova quantidade no Google Sheets e atualiza o estado local.
   // Chamada tanto pelo input direto quanto pelos botões +/-
@@ -66,22 +87,6 @@ export default function GerenciarEstoque() {
       setErroId(produtoId);
     } finally {
       setSalvandoId(null);
-    }
-  }
-
-  async function handleToggleDisponibilidade(produtoId: string, novoValor: boolean) {
-    toggleEstoque(produtoId);
-    setSalvandoDisponibilidade((s) => new Set(s).add(produtoId));
-    try {
-      await fetch("/api/admin/disponibilidade", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ produtoId, emEstoque: novoValor }),
-      });
-    } catch {
-      toggleEstoque(produtoId); // reverte em caso de erro
-    } finally {
-      setSalvandoDisponibilidade((s) => { const n = new Set(s); n.delete(produtoId); return n; });
     }
   }
 
@@ -231,20 +236,52 @@ export default function GerenciarEstoque() {
             }`}
           >
             <div className="flex items-start gap-3">
-              {/* Checkbox de disponibilidade */}
-              <label
-                className="flex-shrink-0 mt-0.5 cursor-pointer"
-                title={produto.emEstoque ? "Disponível — clique para desativar" : "Indisponível — clique para ativar"}
+              {/* Indicador de disponibilidade — somente leitura, derivado da quantidade.
+                  Não é mais clicável: basta editar a quantidade abaixo para o
+                  produto aparecer ou sumir do cardápio automaticamente. */}
+              <div
+                className="flex-shrink-0 mt-0.5 w-5 h-5 rounded-full flex items-center justify-center"
+                title={produto.emEstoque ? "Disponível (quantidade > 0)" : "Indisponível (quantidade em 0)"}
+                aria-label={produto.emEstoque ? "Disponível" : "Indisponível"}
               >
-                <input
-                  type="checkbox"
-                  checked={produto.emEstoque}
-                  disabled={salvandoDisponibilidade.has(produto.id)}
-                  onChange={() => handleToggleDisponibilidade(produto.id, !produto.emEstoque)}
-                  className="w-5 h-5 rounded accent-verde-600 cursor-pointer disabled:opacity-50"
-                  aria-label={produto.emEstoque ? "Remover do estoque" : "Adicionar ao estoque"}
+                <span
+                  className={`w-3 h-3 rounded-full ${
+                    produto.emEstoque ? "bg-verde-500" : "bg-gray-300"
+                  }`}
                 />
-              </label>
+              </div>
+
+              {/* Botão de remover produto — com confirmação inline */}
+              <div className="ml-auto flex-shrink-0 order-last">
+                {confirmandoRemocao === produto.id ? (
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-gray-500">Remover?</span>
+                    <button
+                      onClick={() => handleRemoverProduto(produto.id)}
+                      disabled={removendoId === produto.id}
+                      className="text-xs px-2 py-1 rounded-md bg-red-500 hover:bg-red-600 text-white font-medium disabled:opacity-60"
+                    >
+                      {removendoId === produto.id ? "..." : "Sim"}
+                    </button>
+                    <button
+                      onClick={() => setConfirmandoRemocao(null)}
+                      disabled={removendoId === produto.id}
+                      className="text-xs px-2 py-1 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-600"
+                    >
+                      Não
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setConfirmandoRemocao(produto.id)}
+                    className="text-gray-300 hover:text-red-500 transition-colors p-1"
+                    title="Remover produto"
+                    aria-label={`Remover ${produto.nome}`}
+                  >
+                    🗑️
+                  </button>
+                )}
+              </div>
 
               {/* Infos do produto */}
               <div className="flex-1 min-w-0">

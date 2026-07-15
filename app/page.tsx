@@ -7,14 +7,15 @@ import ProdutosAvulsos from "@/components/cliente/ProdutosAvulsos";
 import Carrinho from "@/components/shared/Carrinho";
 import MontarCesta from "@/components/admin/MontarCesta";
 import GerenciarEstoque from "@/components/admin/GerenciarEstoque";
+import Configuracoes from "@/components/admin/Configuracoes";
 
-const PIN_ADMIN = "1234";
-type AbaAtiva = "cesta" | "estoque";
+type AbaAtiva = "cesta" | "estoque" | "config";
 
 export default function PaginaPrincipal() {
   const [mostrarLoginAdmin, setMostrarLoginAdmin] = useState(false);
   const [pinDigitado, setPinDigitado] = useState("");
   const [autenticado, setAutenticado] = useState(false);
+  const [verificandoPin, setVerificandoPin] = useState(false);
 
   useEffect(() => {
     if (localStorage.getItem("comuna_admin_auth") === "1") setAutenticado(true);
@@ -22,17 +23,33 @@ export default function PaginaPrincipal() {
   const [erroPin, setErroPin] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState<AbaAtiva>("cesta");
 
-  function verificarPin(e: React.FormEvent) {
+  // Verifica o PIN no servidor — o valor correto nunca fica no código do cliente.
+  // Analogia Python: resposta = requests.post("/api/admin/verificar-pin", json={"pin": pin})
+  async function verificarPin(e: React.FormEvent) {
     e.preventDefault();
-    if (pinDigitado === PIN_ADMIN) {
-      localStorage.setItem("comuna_admin_auth", "1");
-      setAutenticado(true);
-      setMostrarLoginAdmin(false);
-      setErroPin(false);
-      setPinDigitado("");
-    } else {
+    setVerificandoPin(true);
+    setErroPin(false);
+    try {
+      const res = await fetch("/api/admin/verificar-pin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pin: pinDigitado }),
+      });
+      const dados = await res.json();
+      if (dados.valido) {
+        localStorage.setItem("comuna_admin_auth", "1");
+        setAutenticado(true);
+        setMostrarLoginAdmin(false);
+        setPinDigitado("");
+      } else {
+        setErroPin(true);
+        setPinDigitado("");
+      }
+    } catch {
       setErroPin(true);
       setPinDigitado("");
+    } finally {
+      setVerificandoPin(false);
     }
   }
 
@@ -71,7 +88,7 @@ export default function PaginaPrincipal() {
           </div>
 
           <div className="bg-white rounded-2xl shadow-sm border border-verde-100 overflow-hidden">
-            <div className="grid grid-cols-2 border-b border-gray-100">
+            <div className="grid grid-cols-3 border-b border-gray-100">
               <button
                 onClick={() => setAbaAtiva("cesta")}
                 className={`py-4 text-sm font-semibold transition-colors ${
@@ -92,9 +109,21 @@ export default function PaginaPrincipal() {
               >
                 📦 Gerenciar Estoque
               </button>
+              <button
+                onClick={() => setAbaAtiva("config")}
+                className={`py-4 text-sm font-semibold transition-colors ${
+                  abaAtiva === "config"
+                    ? "text-verde-700 border-b-2 border-verde-600 bg-verde-50"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                ⚙️ Configurações
+              </button>
             </div>
             <div className="p-4">
-              {abaAtiva === "cesta" ? <MontarCesta /> : <GerenciarEstoque />}
+              {abaAtiva === "cesta" && <MontarCesta />}
+              {abaAtiva === "estoque" && <GerenciarEstoque />}
+              {abaAtiva === "config" && <Configuracoes />}
             </div>
           </div>
         </main>
@@ -141,8 +170,8 @@ export default function PaginaPrincipal() {
                   PIN incorreto. Tente novamente.
                 </p>
               )}
-              <button type="submit" className="w-full btn-primary">
-                Entrar
+              <button type="submit" disabled={verificandoPin} className="w-full btn-primary disabled:opacity-60">
+                {verificandoPin ? "Verificando..." : "Entrar"}
               </button>
               <button
                 type="button"

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCarrinho } from "@/lib/carrinho-context";
 import { useLoja } from "@/lib/loja-context";
-import { WHATSAPP_NUMERO, ENDERECO_RETIRADA } from "@/lib/dados";
+import { WHATSAPP_NUMERO as WHATSAPP_NUMERO_PADRAO, ENDERECO_RETIRADA } from "@/lib/dados";
 import type { DadosCliente } from "@/lib/types";
 
 interface CheckoutModalProps {
@@ -40,6 +40,21 @@ export default function CheckoutModal({ onFechar }: CheckoutModalProps) {
     "formulario"
   );
   const [salvandoPedido, setSalvandoPedido] = useState(false);
+  // Número de WhatsApp vindo da planilha (aba Configurações). Começa com o
+  // valor padrão do código e é substituído assim que a API responde —
+  // se ela falhar, o padrão garante que o checkout nunca fique bloqueado.
+  const [whatsappNumero, setWhatsappNumero] = useState(WHATSAPP_NUMERO_PADRAO);
+
+  useEffect(() => {
+    fetch("/api/config")
+      .then((res) => res.json())
+      .then((dados) => {
+        if (dados.whatsappNumero) setWhatsappNumero(dados.whatsappNumero);
+      })
+      .catch(() => {
+        // Mantém o número padrão em caso de falha
+      });
+  }, []);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -125,7 +140,7 @@ ${linhasItens}
 ⚠️ _Disponibilidade sujeita a confirmação no momento da separação._`;
 
     // encodeURIComponent é como urllib.parse.quote() em Python
-    const url = `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(mensagem)}`;
+    const url = `https://wa.me/${whatsappNumero}?text=${encodeURIComponent(mensagem)}`;
     window.open(url, "_blank");
     limpar();
     onFechar();

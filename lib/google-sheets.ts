@@ -113,14 +113,18 @@ export async function buscarProdutosDaPlanilha(): Promise<Produto[]> {
     .filter((linha) => linha.get("id")) // ignora linhas vazias
     .map((linha) => {
       const quantidade = parseInt(linha.get("quantidade") || "0", 10) || 0;
-      // Se quantidade não preenchida (0 ou vazio), produto some do cardápio
-      const emEstoque =
-        String(linha.get("emEstoque")).toUpperCase() === "TRUE" && quantidade > 0;
+      // Disponibilidade é 100% derivada da quantidade — não existe mais checkbox
+      // manual de "em estoque". Elizete só mexe na quantidade, em qualquer lugar
+      // (app ou direto na planilha), e o produto aparece/some automaticamente.
+      const emEstoque = quantidade > 0;
 
       return {
         id: linha.get("id"),
         nome: linha.get("nome"),
-        preco: parseFloat(linha.get("preco")) || 0,
+        // O Google Sheets (planilha em pt-BR) às vezes formata números escritos
+        // via API com vírgula decimal (ex: "9,99"). O replace garante que o
+        // parseFloat funcione nos dois formatos, evitando truncar os centavos.
+        preco: parseFloat(String(linha.get("preco")).replace(",", ".")) || 0,
         unidade: linha.get("unidade"),
         categoria: linha.get("categoria") as Categoria,
         emEstoque,
@@ -218,22 +222,6 @@ export async function atualizarPrecoNaPlanilha(
   await linha.save();
 }
 
-// ─── Atualização de Disponibilidade (emEstoque) ──────────────
-export async function atualizarEmEstoqueNaPlanilha(
-  produtoId: string,
-  emEstoque: boolean
-): Promise<void> {
-  const doc = await abrirPlanilha();
-  const aba = doc.sheetsByTitle["Estoque"];
-  if (!aba) throw new Error('Aba "Estoque" não encontrada na planilha.');
-
-  const linhas = await comRetry(() => aba.getRows());
-  const linha = linhas.find((l) => l.get("id") === produtoId);
-  if (!linha) throw new Error(`Produto "${produtoId}" não encontrado na planilha.`);
-
-  linha.set("emEstoque", emEstoque);
-  await linha.save();
-}
 
 // ─── Atualização de Unidade ──────────────────────────────────
 export async function atualizarUnidadeNaPlanilha(
@@ -270,6 +258,119 @@ export async function atualizarCestaNaPlanilha(
 
   linha.set(campo, valor);
   await linha.save();
+}
+
+// ─── Criação de Produto ──────────────────────────────────────
+// Chamada pelo painel admin ao cadastrar um novo produto. Grava direto
+// na aba "Estoque" — antes disso, o produto só existia no navegador.
+// Analogia Python: df = pd.concat([df, pd.DataFrame([novo_produto])])
+export interface NovoProdutoParaSalvar {
+  id: string;
+  nome: string;
+  preco: number;
+  unidade: string;
+  categoria: Categoria;
+  descricao?: string;
+}
+
+export async function adicionarProdutoNaPlanilha(
+  produto: NovoProdutoParaSalvar
+): Promise<void> {
+  const doc = await abrirPlanilha();
+  const aba = doc.sheetsByTitle["Estoque"];
+  if (!aba) throw new Error('Aba "Estoque" não encontrada na planilha.');
+
+  await comRetry(() =>
+    aba.addRow({
+      id: produto.id,
+      nome: produto.nome,
+      preco: produto.preco,
+      unidade: produto.unidade,
+      categoria: produto.categoria,
+      emEstoque: true,
+      quantidade: 0,
+      naCestaGrande: false,
+      naCestaPequena: false,
+      descricao: produto.descricao || "",
+    })
+  );
+}
+
+// ─── Remoção de Produto ──────────────────────────────────────
+// Chamada pelo painel admin ao excluir um produto. Remove a linha
+// correspondente na aba "Estoque" pelo id.
+// Analogia Python: df = df[df['id'] != produto_id]
+export async function removerProdutoDaPlanilha(produtoId: string): Promise<void> {
+  const doc = await abrirPlanilha();
+  const aba = doc.sheetsByTitle["Estoque"];
+  if (!aba) throw new Error('Aba "Estoque" não encontrada na planilha.');
+
+  const linhas = await comRetry(() => aba.getRows());
+  const linha = linhas.find((l) => l.get("id") === produtoId);
+  if (!linha) throw new Error(`Produto "${produtoId}" não encontrado na planilha.`);
+
+  await comRetry(() => linha.delete());
+}
+
+// ─── Configurações (PIN e WhatsApp) ──────────────────────────
+// Lê a aba "Configurações" (formato chave/valor) e retorna um objeto.
+// Analogia Python: dict(df[['chave','valor']].values) — vira um dict simples.
+let _configCache: Record<string, string> | null = null;
+let _configCacheExpiry = 0;
+
+async function buscarConfiguracoes(): Promise<Record<string, string>> {
+  const agora = Date.now();
+  if (_configCache && agora < _configCacheExpiry) return _configCache;
+
+  const doc = await abrirPlanilha();
+  const aba = doc.sheetsByTitle["Configurações"];
+  if (!aba) throw new Error('Aba "Configurações" não encontrada na planilha.');
+
+  const linhas = await comRetry(() => aba.getRows());
+  const config: Record<string, string> = {};
+  for (const linha of linhas) {
+    const chave = linha.get("chave");
+    if (chave) config[chave] = linha.get("valor") ?? "";
+  }
+
+  _configCache = config;
+  _configCacheExpiry = agora + 30_000; // 30 segundos
+  return config;
+}
+
+export function invalidarCacheConfiguracoes() {
+  _configCache = null;
+  _configCacheExpiry = 0;
+}
+
+// Retorna apenas os campos seguros de expor ao cliente (nunca o PIN)
+export async function buscarConfigPublica(): Promise<{ whatsappNumero: string }> {
+  const config = await buscarConfiguracoes();
+  return { whatsappNumero: config.whatsappNumero ?? "" };
+}
+
+// Verifica o PIN no servidor — o valor correto nunca é enviado ao cliente
+export async function verificarPin(pinDigitado: string): Promise<boolean> {
+  const config = await buscarConfiguracoes();
+  return config.pin === pinDigitado;
+}
+
+// Atualiza uma chave (pin ou whatsappNumero) na aba "Configurações"
+export async function atualizarConfiguracao(
+  chave: "pin" | "whatsappNumero",
+  novoValor: string
+): Promise<void> {
+  const doc = await abrirPlanilha();
+  const aba = doc.sheetsByTitle["Configurações"];
+  if (!aba) throw new Error('Aba "Configurações" não encontrada na planilha.');
+
+  const linhas = await comRetry(() => aba.getRows());
+  const linha = linhas.find((l) => l.get("chave") === chave);
+  if (!linha) throw new Error(`Chave "${chave}" não encontrada na aba Configurações.`);
+
+  linha.set("valor", novoValor);
+  await comRetry(() => linha.save());
+  invalidarCacheConfiguracoes();
 }
 
 // ─── Gravação de Solicitações ────────────────────────────────
@@ -309,6 +410,62 @@ export async function salvarSolicitacoes({
   );
 }
 
+// ─── Gravação na aba "Etiqueta" (transposta) ─────────────────
+// Sempre que um pedido é salvo, seus dados são inseridos como uma
+// NOVA COLUNA na aba "Etiqueta" (em vez de uma nova linha), na mesma
+// ordem de campos da aba "Pedidos". Isso reproduz automaticamente o
+// que Elizete fazia manualmente: colar cada pedido transposto para
+// facilitar a impressão de etiquetas.
+//
+// Analogia Python: é como fazer df_pedido.T (transpor a linha em
+// coluna) e colar o resultado na próxima coluna livre de outra aba.
+async function inserirNaAbaEtiqueta(campos: string[]): Promise<void> {
+  const doc = await abrirPlanilha();
+  const aba = doc.sheetsByTitle["Etiqueta"];
+  if (!aba) return; // aba opcional — não impede o registro do pedido se não existir
+
+  const totalLinhas = campos.length;
+
+  await comRetry(() =>
+    aba.loadCells({
+      startRowIndex: 0,
+      endRowIndex: totalLinhas,
+      startColumnIndex: 0,
+      endColumnIndex: aba.columnCount,
+    })
+  );
+
+  // Acha a primeira coluna vazia, checando a linha do timestamp (linha 0)
+  let coluna = 0;
+  while (coluna < aba.columnCount && aba.getCell(0, coluna).value) {
+    coluna++;
+  }
+
+  // Se a planilha não tiver colunas livres suficientes, expande antes de escrever
+  if (coluna >= aba.columnCount) {
+    await comRetry(() =>
+      aba.resize({
+        rowCount: Math.max(aba.rowCount, totalLinhas),
+        columnCount: aba.columnCount + 20,
+      })
+    );
+    await comRetry(() =>
+      aba.loadCells({
+        startRowIndex: 0,
+        endRowIndex: totalLinhas,
+        startColumnIndex: 0,
+        endColumnIndex: aba.columnCount,
+      })
+    );
+  }
+
+  campos.forEach((valor, linha) => {
+    aba.getCell(linha, coluna).value = valor;
+  });
+
+  await comRetry(() => aba.saveUpdatedCells());
+}
+
 // ─── Tipos do Pedido ─────────────────────────────────────────
 // Representa os dados que o CheckoutModal envia para salvar
 export interface PedidoParaSalvar {
@@ -337,20 +494,42 @@ export async function salvarPedido(pedido: PedidoParaSalvar): Promise<string> {
   // Número do pedido: timestamp em milissegundos → garante unicidade
   // Ex: "PED-1718200000000" — Elizete usa para identificar cada pedido
   const numeroPedido = `PED-${Date.now()}`;
+  const timestamp = new Date().toLocaleString("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+  });
+  const enderecoEntrega = pedido.enderecoEntrega || "";
+  const observacoes = pedido.observacoes || "";
+  const totalPrecoTexto = pedido.totalPreco.toFixed(2);
+  const status = "Pendente";
 
   await aba.addRow({
-    timestamp: new Date().toLocaleString("pt-BR", {
-      timeZone: "America/Sao_Paulo",
-    }),
+    timestamp,
     numeroPedido,
     nomeCliente: pedido.nomeCliente,
     celular: pedido.celular,
     tipoEntrega: pedido.tipoEntrega,
-    enderecoEntrega: pedido.enderecoEntrega || "",
+    enderecoEntrega,
     itens: pedido.itens,
-    totalPreco: pedido.totalPreco.toFixed(2),
-    observacoes: pedido.observacoes || "",
-    status: "Pendente",
+    totalPreco: totalPrecoTexto,
+    observacoes,
+    status,
+  });
+
+  // Espelha o mesmo pedido, transposto, na aba "Etiqueta"
+  // Falha aqui não deve impedir o pedido de ser confirmado ao cliente.
+  await inserirNaAbaEtiqueta([
+    timestamp,
+    numeroPedido,
+    pedido.nomeCliente,
+    pedido.celular,
+    pedido.tipoEntrega,
+    enderecoEntrega,
+    pedido.itens,
+    totalPrecoTexto,
+    observacoes,
+    status,
+  ]).catch((erro) => {
+    console.error("[salvarPedido] Falha ao inserir na aba Etiqueta:", erro);
   });
 
   return numeroPedido;
