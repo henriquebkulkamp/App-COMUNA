@@ -1,0 +1,37 @@
+name: Lighthouse CI
+
+# Roda em todo push (qualquer branch) e também pode ser disparado manualmente.
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  lighthouse:
+    name: Auditoria Lighthouse
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Build da aplicação
+        run: npm run build
+
+      - name: Rodar Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          urls: |
+            http://localhost:3000/
+          startServerCommand: npm run start
+          startServerReadyPattern: "Ready"
+          startServerReadyTimeout: 30000
+          uploadArtifacts: true
+          temporaryPublicStorage: true
