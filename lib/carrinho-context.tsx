@@ -21,6 +21,7 @@ import {
   ReactNode,
 } from "react";
 import type { Produto, ItemCarrinho } from "./types";
+import { precoEfetivo } from "./formatadores";
 
 type Action =
   | { type: "ADICIONAR"; produto: Produto }
@@ -118,9 +119,11 @@ export function CarrinhoProvider({ children }: { children: ReactNode }) {
   // sum(item['quantidade'] for item in itens)
   const totalItens = itens.reduce((acc, item) => acc + item.quantidade, 0);
 
-  // sum(item['produto']['preco'] * item['quantidade'] for item in itens)
+  // Usa o preço efetivo (com desconto quando houver) — é o que o
+  // cliente de fato paga, não necessariamente o preço base.
+  // sum(preco_efetivo(item['produto']) * item['quantidade'] for item in itens)
   const totalPreco = itens.reduce(
-    (acc, item) => acc + item.produto.preco * item.quantidade,
+    (acc, item) => acc + precoEfetivo(item.produto) * item.quantidade,
     0
   );
 

@@ -1,73 +1,155 @@
 "use client";
 
 import Link from "next/link";
+import Button from "@cloudscape-design/components/button";
+import Box from "@cloudscape-design/components/box";
+import {
+  colorBackgroundLayoutToggleSelectedDefault,
+  colorTextLayoutToggleSelected,
+  colorBackgroundNotificationRed,
+  colorTextNotificationSeverityHigh,
+  shadowContainerActive,
+  spaceScaledXs,
+  spaceScaledS,
+  spaceScaledM,
+  spaceScaledXxs,
+  fontSizeBodyS,
+  fontSizeBodyM,
+  fontSizeHeadingM,
+  spaceScaledL,
+} from "@cloudscape-design/design-tokens";
 import { useCarrinho } from "@/lib/carrinho-context";
 
 interface HeaderProps {
   mostrarCarrinho?: boolean;
   titulo?: string;
   onAdminClick?: () => void;
+  /** Chamado ao clicar no ícone do carrinho — quem chama decide o que
+   *  fazer (abrir o painel do carrinho, ver app/page.tsx). */
+  onCarrinhoClick?: () => void;
 }
 
+// ============================================================
+// Header — barra de topo fixa. Estrutura própria (não o
+// TopNavigation do Cloudscape — seu slot model é pensado pro nav
+// global do Console AWS e não encaixa direito num carrinho com
+// contador numérico próprio), mas toda cor, espaçamento, sombra e
+// tamanho de fonte vêm de @cloudscape-design/design-tokens — nada
+// escolhido à mão. As únicas medidas literais que sobram são a
+// largura máxima do cabeçalho (decisão de layout desta página, não
+// um token de tema) e o tamanho dos emojis usados como ícone.
+// ============================================================
 export default function Header({
   mostrarCarrinho = true,
   titulo,
   onAdminClick,
+  onCarrinhoClick,
 }: HeaderProps) {
   const { totalItens } = useCarrinho();
 
   return (
-    <header className="bg-verde-700 text-white shadow-md sticky top-0 z-40">
-      <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+    <header
+      style={{
+        backgroundColor: colorBackgroundLayoutToggleSelectedDefault,
+        color: colorTextLayoutToggleSelected,
+        boxShadow: shadowContainerActive,
+        position: "sticky",
+        top: 0,
+        zIndex: 40,
+      }}
+    >
+      <div
+        style={{
+          maxWidth: "56rem",
+          margin: "0 auto",
+          padding: `${spaceScaledS} ${spaceScaledM}`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: spaceScaledS,
+        }}
+      >
         {/* Logo e nome */}
-        <Link href="/cliente" className="flex items-center gap-2">
-          <span className="text-2xl">🌿</span>
-          <div>
-            <span className="font-bold text-lg leading-tight block">COMUNA</span>
-            <span className="text-verde-200 text-xs leading-tight block">
+        <Link
+          href="/cliente"
+          style={{ display: "flex", alignItems: "center", gap: spaceScaledXs, textDecoration: "none" }}
+        >
+          <span style={{ fontSize: fontSizeHeadingM }}>🌿</span>
+          <Box color="inherit">
+            <span
+              style={{
+                fontWeight: "bold",
+                fontSize: fontSizeBodyM,
+                lineHeight: 1.2,
+                display: "block",
+                color: colorTextLayoutToggleSelected,
+              }}
+            >
+              COMUNA
+            </span>
+            <span
+              style={{
+                fontSize: fontSizeBodyS,
+                lineHeight: 1.2,
+                display: "block",
+                color: colorTextLayoutToggleSelected,
+                opacity: 0.8,
+              }}
+            >
               Cooperativa Orgânica Agroflorestal
             </span>
-          </div>
+          </Box>
         </Link>
 
         {/* Título central (opcional — usado no painel admin) */}
         {titulo && (
-          <span className="font-semibold text-verde-100 text-sm hidden sm:block">
+          <span
+            className="comuna-header-titulo"
+            style={{ fontWeight: 600, fontSize: fontSizeBodyM, color: colorTextLayoutToggleSelected }}
+          >
             {titulo}
           </span>
         )}
 
-        {/* Botão de acesso admin */}
-        {onAdminClick && (
-          <button
-            onClick={onAdminClick}
-            className="text-verde-100 hover:text-white border border-verde-500 hover:border-verde-300 transition-colors px-3 py-1.5 rounded-lg text-xs font-semibold"
-            aria-label="Área administrativa"
-          >
-            Área da COMUNA
-          </button>
-        )}
+        <div style={{ display: "flex", alignItems: "center", gap: spaceScaledXs }}>
+          {/* Botão de acesso admin */}
+          {onAdminClick && (
+            <Button onClick={onAdminClick} variant="normal" ariaLabel="Área administrativa">
+              Área da COMUNA
+            </Button>
+          )}
 
-        {/* Ícone do carrinho */}
-        {mostrarCarrinho && (
-          <button
-            onClick={() => {
-              // Scroll suave até o carrinho — acessível por âncora
-              document
-                .getElementById("carrinho-section")
-                ?.scrollIntoView({ behavior: "smooth" });
-            }}
-            className="relative bg-verde-600 hover:bg-verde-500 transition-colors p-2 rounded-xl"
-            aria-label="Ver carrinho"
-          >
-            <span className="text-xl">🛒</span>
-            {totalItens > 0 && (
-              <span className="absolute -top-1 -right-1 bg-terra-400 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
-                {totalItens > 9 ? "9+" : totalItens}
-              </span>
-            )}
-          </button>
-        )}
+          {/* Ícone do carrinho */}
+          {mostrarCarrinho && (
+            <span style={{ position: "relative", display: "inline-block" }}>
+              <Button onClick={onCarrinhoClick} variant="normal" ariaLabel="Ver carrinho">
+                🛒
+              </Button>
+              {totalItens > 0 && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: `calc(-1 * ${spaceScaledXxs})`,
+                    right: `calc(-1 * ${spaceScaledXxs})`,
+                    backgroundColor: colorBackgroundNotificationRed,
+                    color: colorTextNotificationSeverityHigh,
+                    fontSize: fontSizeBodyS,
+                    fontWeight: "bold",
+                    width: spaceScaledL,
+                    height: spaceScaledL,
+                    borderRadius: "9999px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    pointerEvents: "none",
+                  }}
+                >
+                  {totalItens > 9 ? "9+" : totalItens}
+                </span>
+              )}
+            </span>
+          )}
+        </div>
       </div>
     </header>
   );

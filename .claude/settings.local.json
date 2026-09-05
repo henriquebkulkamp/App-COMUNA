@@ -8,5 +8,9 @@
       "mcp__Claude_Preview__preview_start",
       "PowerShell(Stop-Process -Id 12248 -Force)"
     ]
+  },
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true
   }
 }

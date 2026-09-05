@@ -6,7 +6,7 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
-import { verificarPin } from "@/lib/google-sheets";
+import { verificarPin } from "@/lib/db";
 
 export async function POST(request: NextRequest) {
   try {

@@ -6,7 +6,7 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
-import { atualizarConfiguracao } from "@/lib/google-sheets";
+import { atualizarConfiguracao } from "@/lib/db";
 
 export async function PATCH(request: NextRequest) {
   try {

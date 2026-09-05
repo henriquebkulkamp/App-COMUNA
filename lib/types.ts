@@ -29,7 +29,8 @@ export type Categoria =
 export interface Produto {
   id: string;
   nome: string;
-  preco: number;        // em R$ (ex: 8.00)
+  preco: number;        // preço base, em R$ (ex: 8.00)
+  precoReal?: number;   // preço com desconto, em R$ — undefined/igual a `preco` = sem desconto
   unidade: string;      // string de display (ex: "500g", "1 unidade", "250ml")
   categoria: Categoria;
   emEstoque: boolean;   // Elizete controla — true = aparece para o cliente
@@ -37,7 +38,8 @@ export interface Produto {
   naCestaGrande: boolean;  // true = este item está na cesta grande desta semana
   naCestaPequena: boolean; // true = este item está na cesta pequena desta semana
   descricao?: string;   // opcional — breve descrição para o cardápio do cliente
-  imagemUrl?: string;   // opcional — URL da foto do produto
+  imagemUrl?: string;   // opcional — URL (ou data URI) da foto do produto
+  tags?: string[];      // livres e opcionais — 0, 1 ou várias por produto
 }
 
 // Um item dentro do carrinho de compras

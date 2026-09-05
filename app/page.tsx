@@ -1,13 +1,30 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Container from "@cloudscape-design/components/container";
 import Header from "@/components/shared/Header";
+import Box from "@cloudscape-design/components/box";
+import Button from "@cloudscape-design/components/button";
+import Modal from "@cloudscape-design/components/modal";
+import FormField from "@cloudscape-design/components/form-field";
+import Input from "@cloudscape-design/components/input";
+import Tabs from "@cloudscape-design/components/tabs";
+import SpaceBetween from "@cloudscape-design/components/space-between";
+import {
+  colorBackgroundLayoutMain,
+  spaceScaledS,
+  spaceScaledM,
+  spaceScaledXl,
+  fontSizeHeadingXl,
+} from "@cloudscape-design/design-tokens";
 import CestaDaSemana from "@/components/cliente/CestaDaSemana";
+import ProdutosDestaque from "@/components/cliente/ProdutosDestaque";
 import ProdutosAvulsos from "@/components/cliente/ProdutosAvulsos";
 import Carrinho from "@/components/shared/Carrinho";
 import MontarCesta from "@/components/admin/MontarCesta";
 import GerenciarEstoque from "@/components/admin/GerenciarEstoque";
 import Configuracoes from "@/components/admin/Configuracoes";
+import { useCarrinho } from "@/lib/carrinho-context";
 
 type AbaAtiva = "cesta" | "estoque" | "config";
 
@@ -16,6 +33,8 @@ export default function PaginaPrincipal() {
   const [pinDigitado, setPinDigitado] = useState("");
   const [autenticado, setAutenticado] = useState(false);
   const [verificandoPin, setVerificandoPin] = useState(false);
+  const [carrinhoAberto, setCarrinhoAberto] = useState(false);
+  const { totalItens } = useCarrinho();
 
   useEffect(() => {
     if (localStorage.getItem("comuna_admin_auth") === "1") setAutenticado(true);
@@ -24,7 +43,6 @@ export default function PaginaPrincipal() {
   const [abaAtiva, setAbaAtiva] = useState<AbaAtiva>("cesta");
 
   // Verifica o PIN no servidor — o valor correto nunca fica no código do cliente.
-  // Analogia Python: resposta = requests.post("/api/admin/verificar-pin", json={"pin": pin})
   async function verificarPin(e: React.FormEvent) {
     e.preventDefault();
     setVerificandoPin(true);
@@ -67,159 +85,134 @@ export default function PaginaPrincipal() {
   // ── Modo Admin ──────────────────────────────────────────────
   if (autenticado) {
     return (
-      <div className="min-h-screen bg-creme">
+      <div style={{ minHeight: "100vh", backgroundColor: colorBackgroundLayoutMain }}>
         <Header mostrarCarrinho={false} titulo="Painel Admin" />
 
-        <main className="max-w-3xl mx-auto px-4 py-6 space-y-6">
-          <div className="bg-verde-700 text-white rounded-2xl p-4 flex items-center gap-3">
-            <span className="text-3xl">👩‍🌾</span>
-            <div>
-              <p className="font-bold">Olá, Elizete!</p>
-              <p className="text-verde-200 text-sm">
-                Gerencie o estoque e monte as cestas da semana aqui.
-              </p>
-            </div>
-            <button
-              onClick={sair}
-              className="ml-auto text-verde-300 hover:text-white text-xs"
-            >
-              Sair
-            </button>
-          </div>
+        <main style={{ maxWidth: "48rem", margin: "0 auto", padding: `${spaceScaledXl} ${spaceScaledM}` }}>
+          <SpaceBetween size="l">
+            <Container>
+              <div style={{ display: "flex", alignItems: "center", gap: spaceScaledS }}>
+                <span style={{ fontSize: fontSizeHeadingXl }}>👩‍🌾</span>
+                <div style={{ flex: 1 }}>
+                  <Box fontWeight="bold">Olá, Elizete!</Box>
+                  <Box color="text-body-secondary" fontSize="body-s">
+                    Gerencie o estoque e monte as cestas da semana aqui.
+                  </Box>
+                </div>
+                <Button onClick={sair} variant="link">
+                  Sair
+                </Button>
+              </div>
+            </Container>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-verde-100 overflow-hidden">
-            <div className="grid grid-cols-3 border-b border-gray-100">
-              <button
-                onClick={() => setAbaAtiva("cesta")}
-                className={`py-4 text-sm font-semibold transition-colors ${
-                  abaAtiva === "cesta"
-                    ? "text-verde-700 border-b-2 border-verde-600 bg-verde-50"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                🧺 Montar Cesta da Semana
-              </button>
-              <button
-                onClick={() => setAbaAtiva("estoque")}
-                className={`py-4 text-sm font-semibold transition-colors ${
-                  abaAtiva === "estoque"
-                    ? "text-verde-700 border-b-2 border-verde-600 bg-verde-50"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                📦 Gerenciar Estoque
-              </button>
-              <button
-                onClick={() => setAbaAtiva("config")}
-                className={`py-4 text-sm font-semibold transition-colors ${
-                  abaAtiva === "config"
-                    ? "text-verde-700 border-b-2 border-verde-600 bg-verde-50"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                ⚙️ Configurações
-              </button>
-            </div>
-            <div className="p-4">
-              {abaAtiva === "cesta" && <MontarCesta />}
-              {abaAtiva === "estoque" && <GerenciarEstoque />}
-              {abaAtiva === "config" && <Configuracoes />}
-            </div>
-          </div>
+            <Container disableContentPaddings>
+              <Tabs
+                activeTabId={abaAtiva}
+                onChange={({ detail }) => setAbaAtiva(detail.activeTabId as AbaAtiva)}
+                tabs={[
+                  { id: "cesta", label: "🧺 Montar Cesta da Semana", content: <MontarCesta /> },
+                  { id: "estoque", label: "📦 Gerenciar Estoque", content: <GerenciarEstoque /> },
+                  { id: "config", label: "⚙️ Configurações", content: <Configuracoes /> },
+                ]}
+              />
+            </Container>
+          </SpaceBetween>
         </main>
       </div>
     );
   }
 
   // ── Modo Cliente ────────────────────────────────────────────
+  // Fundo da página com um amarelo bem sutil — os Containers continuam
+  // brancos por cima, sem degradê, uma cor sólida de cada lado.
+  //
+  // Um pouco mais escuro que o token `colorBackgroundStatusWarning`
+  // dos Alerts (#fffef0), pra contrastar mais com o branco dos
+  // Containers — mas sem pular pro próximo degrau da paleta do
+  // Cloudscape (`color-warning-100`, #fffbbd), que é bem mais
+  // saturado. Mesmo tom, só um pouco mais escuro.
+  const FUNDO_PAGINA = "#f0f0e8";
+
   return (
-    <div className="min-h-screen bg-creme">
-      <Header onAdminClick={() => setMostrarLoginAdmin(true)} />
+    <div style={{ minHeight: "100vh", backgroundColor: FUNDO_PAGINA }}>
+      <Header
+        onAdminClick={() => setMostrarLoginAdmin(true)}
+        onCarrinhoClick={() => setCarrinhoAberto(true)}
+      />
 
       {/* Modal de login admin */}
-      {mostrarLoginAdmin && (
-        <div
-          className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
-          onClick={(e) => e.target === e.currentTarget && fecharModal()}
-        >
-          <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-xs text-center">
-            <span className="text-4xl block mb-3">🔒</span>
-            <h2 className="font-bold text-verde-700 text-xl mb-1">
-              Área Restrita
-            </h2>
-            <p className="text-sm text-gray-500 mb-6">
-              Painel da Elizete — COMUNA
-            </p>
-
-            <form onSubmit={verificarPin} className="space-y-4">
-              <input
-                type="password"
-                value={pinDigitado}
-                onChange={(e) => setPinDigitado(e.target.value)}
-                placeholder="Digite o PIN"
-                maxLength={6}
-                autoFocus
-                className={`w-full border rounded-xl px-4 py-3 text-center text-lg tracking-widest focus:outline-none focus:ring-2 ${
-                  erroPin
-                    ? "border-red-300 focus:ring-red-200"
-                    : "border-gray-200 focus:ring-verde-300"
-                }`}
-              />
-              {erroPin && (
-                <p className="text-red-500 text-sm">
-                  PIN incorreto. Tente novamente.
-                </p>
-              )}
-              <button type="submit" disabled={verificandoPin} className="w-full btn-primary disabled:opacity-60">
+      <Modal visible={mostrarLoginAdmin} onDismiss={fecharModal} header="🔒 Área Restrita" size="small">
+        <SpaceBetween size="m">
+          <Box color="text-body-secondary" textAlign="center">
+            Painel da Elizete — COMUNA
+          </Box>
+          <form onSubmit={verificarPin}>
+            <SpaceBetween size="m">
+              <FormField errorText={erroPin ? "PIN incorreto. Tente novamente." : undefined}>
+                <Input
+                  type="password"
+                  value={pinDigitado}
+                  onChange={({ detail }) => setPinDigitado(detail.value)}
+                  placeholder="Digite o PIN"
+                  autoFocus
+                />
+              </FormField>
+              <Button variant="primary" fullWidth loading={verificandoPin} formAction="submit">
                 {verificandoPin ? "Verificando..." : "Entrar"}
-              </button>
-              <button
-                type="button"
-                onClick={fecharModal}
-                className="w-full text-sm text-gray-400 hover:text-gray-600"
-              >
+              </Button>
+              <Button variant="link" fullWidth formAction="none" onClick={fecharModal}>
                 Cancelar
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
+              </Button>
+            </SpaceBetween>
+          </form>
+        </SpaceBetween>
+      </Modal>
 
-      <main className="max-w-6xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
-          <div className="space-y-6">
-            <section className="bg-verde-700 text-white rounded-2xl p-5">
-              <div className="flex items-start gap-3">
-                <span className="text-3xl">🌿</span>
-                <div>
-                  <h1 className="font-bold text-xl mb-1">
-                    Bem-vindo à COMUNA
-                  </h1>
-                  <p className="text-verde-100 text-sm leading-relaxed">
-                    Somos uma cooperativa orgânica agroflorestal que conecta
-                    agricultores familiares e consumidores conscientes. Cada
-                    produto carrega o cuidado de quem planta com amor e
-                    respeito à terra. Mais do que uma feira, somos um projeto
-                    de vida — semeando alimento, saúde e comunidade.
-                  </p>
-                </div>
+      {/* Painel do carrinho — abre ao clicar no ícone 🛒 do Header, não
+          fica mais fixo na tela (por isso o conteúdo abaixo pode usar
+          quase toda a largura). */}
+      <Modal
+        visible={carrinhoAberto}
+        onDismiss={() => setCarrinhoAberto(false)}
+        header={`🛒 Seu Carrinho${totalItens > 0 ? ` (${totalItens})` : ""}`}
+        size="medium"
+      >
+        <Carrinho />
+      </Modal>
+
+      {/* Sem coluna reservada pro carrinho — o conteúdo ocupa a maior
+          parte da largura da tela (~80%, com um teto pra não esticar
+          demais em monitores ultra-wide). */}
+      <main style={{ width: "80%", maxWidth: "1800px", margin: "0 auto", padding: `${spaceScaledXl} ${spaceScaledM}` }}>
+        <SpaceBetween size="l">
+          {/* Espaço privilegiado: logo abaixo do header, antes de
+              qualquer outra seção — é a primeira coisa que o cliente vê. */}
+          <CestaDaSemana />
+
+          <Container>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: spaceScaledS }}>
+              <span style={{ fontSize: fontSizeHeadingXl }}>🌿</span>
+              <div>
+                <Box variant="h1">Bem-vindo à COMUNA</Box>
+                <Box color="text-body-secondary">
+                  Somos uma cooperativa orgânica agroflorestal que conecta agricultores
+                  familiares e consumidores conscientes. Cada produto carrega o cuidado de
+                  quem planta com amor e respeito à terra. Mais do que uma feira, somos um
+                  projeto de vida — semeando alimento, saúde e comunidade.
+                </Box>
               </div>
-            </section>
+            </div>
+          </Container>
 
-            <CestaDaSemana />
-            <ProdutosAvulsos />
-          </div>
-
-          <aside className="lg:sticky lg:top-20 lg:h-fit">
-            <Carrinho />
-          </aside>
-        </div>
+          <ProdutosDestaque />
+          <ProdutosAvulsos />
+        </SpaceBetween>
       </main>
 
-      <footer className="mt-12 py-6 text-center text-sm text-gray-400 border-t border-gray-200">
+      <Box textAlign="center" color="text-body-secondary" padding={{ vertical: "l" }}>
         <p>🌱 COMUNA — Cooperativa Orgânica Agroflorestal</p>
-        <p className="mt-1">Semeando amor e vida!</p>
-      </footer>
+        <p>Semeando amor e vida!</p>
+      </Box>
     </div>
   );
 }

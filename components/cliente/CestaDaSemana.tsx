@@ -1,10 +1,117 @@
 "use client";
 
+import Container from "@cloudscape-design/components/container";
+import Header from "@cloudscape-design/components/header";
+import Box from "@cloudscape-design/components/box";
+import Button from "@cloudscape-design/components/button";
+import StatusIndicator from "@cloudscape-design/components/status-indicator";
+import SpaceBetween from "@cloudscape-design/components/space-between";
+import {
+  spaceScaledL,
+  spaceScaledM,
+  spaceScaledXl,
+  spaceScaledXxl,
+  spaceScaledXxs,
+  fontSizeBodyS,
+  colorTextBodySecondary,
+} from "@cloudscape-design/design-tokens";
 import { useLoja } from "@/lib/loja-context";
 import { useCarrinho } from "@/lib/carrinho-context";
+import { formatarPreco, precoEfetivo, temDesconto } from "@/lib/formatadores";
+import type { Produto } from "@/lib/types";
 
-function formatarPreco(valor: number): string {
-  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+// Mais respiro que o padrão do Container (que é pensado pra seções
+// "normais") — é o espaço privilegiado da página, então o conteúdo
+// tem mais ar ao redor.
+const paddingGeneroso = { content: { paddingBlock: spaceScaledXxl, paddingInline: spaceScaledXl } };
+
+// Metade da tela de altura, largura igual à de qualquer outra seção
+// (quem define a largura é o <main> da página, isso aqui só trava a
+// altura). Um piso em px evita que a seção fique espremida demais em
+// telas muito baixas (celular deitado, por exemplo).
+const ALTURA_SECAO = "50vh";
+const ALTURA_MINIMA_SECAO = "420px";
+
+interface CartaoCestaProps {
+  titulo: string;
+  produto: Produto;
+  itens: Produto[];
+}
+
+function CartaoCesta({ titulo, produto, itens }: CartaoCestaProps) {
+  const { adicionar, estaNoCarrinho } = useCarrinho();
+  const noCarrinho = estaNoCarrinho(produto.id);
+
+  return (
+    <Container
+      style={paddingGeneroso}
+      fitHeight
+      header={
+        <Header
+          variant="h2"
+          actions={
+            <div style={{ display: "flex", alignItems: "baseline", gap: spaceScaledXxs }}>
+              {temDesconto(produto) && (
+                <span
+                  style={{
+                    textDecoration: "line-through",
+                    opacity: 0.6,
+                    color: colorTextBodySecondary,
+                    fontSize: fontSizeBodyS,
+                  }}
+                >
+                  {formatarPreco(produto.preco)}
+                </span>
+              )}
+              <Box variant="span" fontWeight="bold" fontSize="heading-xl">
+                {formatarPreco(precoEfetivo(produto))}
+              </Box>
+            </div>
+          }
+        >
+          🧺 {titulo}
+        </Header>
+      }
+    >
+      {/* flex + space-between: o botão fica ancorado embaixo, a lista
+          de itens ocupa o espaço que sobrar — é o que faz o cartão
+          preencher de verdade a altura que o fitHeight reserva. */}
+      <div style={{ height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", gap: spaceScaledM }}>
+        <SpaceBetween size="m">
+          <SpaceBetween direction="horizontal" size="s" alignItems="center">
+            <Box color="text-body-secondary" fontSize="body-m">
+              {itens.length} {itens.length === 1 ? "item" : "itens"} nesta semana
+            </Box>
+            {produto.quantidade !== undefined && produto.quantidade > 0 && (
+              <StatusIndicator type={produto.quantidade <= 5 ? "warning" : "success"}>
+                {produto.quantidade <= 5
+                  ? `Últimas ${produto.quantidade}`
+                  : `${produto.quantidade} disponíveis`}
+              </StatusIndicator>
+            )}
+          </SpaceBetween>
+
+          {/* Lista de itens da cesta — NÃO é selecionável */}
+          <ul style={{ margin: 0, paddingLeft: spaceScaledM }}>
+            {itens.map((item) => (
+              <li key={item.id}>
+                <Box fontSize="body-m">{item.nome}</Box>
+              </li>
+            ))}
+          </ul>
+        </SpaceBetween>
+
+        <Button
+          onClick={() => adicionar(produto)}
+          disabled={noCarrinho}
+          variant="primary"
+          fullWidth
+        >
+          {noCarrinho ? "✓ Adicionada ao carrinho" : `Quero a ${titulo}`}
+        </Button>
+      </div>
+    </Container>
+  );
 }
 
 // ============================================================
@@ -17,12 +124,14 @@ function formatarPreco(valor: number): string {
 //    NÃO escolhe — a cesta é fechada)
 // 3. O cliente pode adicionar a cesta ao carrinho como um item único
 //
-// Analogia de tabela relacional:
-//   SELECT nome FROM produtos WHERE na_cesta_grande = true
+// É o espaço privilegiado da página (primeira seção, logo abaixo do
+// header): trava em 50% da altura da tela — a largura continua a
+// mesma de qualquer outra seção — e usa `fitHeight` do Container pra
+// esticar o conteúdo até preencher esse espaço de verdade (com scroll
+// interno se, por acaso, sobrar mais itens do que cabem).
 // ============================================================
 export default function CestaDaSemana() {
   const { itenscestaGrande, itensCestaPequena, estado } = useLoja();
-  const { adicionar, estaNoCarrinho } = useCarrinho();
 
   const cestaGrande = estado.produtos.find((p) => p.id === "cesta-grande")!;
   const cestaPequena = estado.produtos.find((p) => p.id === "cesta-pequena")!;
@@ -30,140 +139,72 @@ export default function CestaDaSemana() {
   const temCestaGrande = itenscestaGrande.length > 0;
   const temCestaPequena = itensCestaPequena.length > 0;
 
+  // Sem borda/sombra: o fundo da página já contrasta com o branco do
+  // Container, moldura seria redundante (o CartaoCesta interno mantém
+  // a própria — ele fica sobre fundo branco, sem esse contraste).
+  const estiloSecao = {
+    root: { borderWidth: "0", boxShadow: "none" },
+    ...paddingGeneroso,
+  } as const;
+
   if (!temCestaGrande && !temCestaPequena) {
     return (
-      <section className="bg-white rounded-2xl shadow-sm border border-verde-100 p-5">
-        <h2 className="text-xl font-bold text-verde-700 flex items-center gap-2 mb-3">
-          <span>🧺</span> Cesta da Semana
-        </h2>
-        <div className="text-center py-6 text-gray-400">
-          <span className="text-4xl block mb-2">🌱</span>
-          <p className="text-sm">
-            A cesta desta semana ainda não foi montada.
-            <br />
-            Volte em breve!
-          </p>
-        </div>
-      </section>
+      <div style={{ height: ALTURA_SECAO, minHeight: ALTURA_MINIMA_SECAO }}>
+        <Container
+          style={estiloSecao}
+          fitHeight
+          header={<Header variant="h1">🧺 Cesta da Semana</Header>}
+        >
+          <div style={{ height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
+            <Box textAlign="center" color="text-body-secondary">
+              <Box fontSize="display-l">🌱</Box>
+              A cesta desta semana ainda não foi montada.
+              <br />
+              Volte em breve!
+            </Box>
+          </div>
+        </Container>
+      </div>
     );
   }
 
   return (
-    <section className="bg-white rounded-2xl shadow-sm border border-verde-100 p-5">
-      <h2 className="text-xl font-bold text-verde-700 flex items-center gap-2 mb-1">
-        <span>🧺</span> Cesta da Semana
-      </h2>
-      <p className="text-sm text-gray-500 mb-4">
-        Selecionada com carinho pela COMUNA. A composição pode variar conforme a
-        oferta dos produtores.
-      </p>
-
-      <div className="grid sm:grid-cols-2 gap-4">
-        {/* ── Cesta Grande ─────────────────────────── */}
-        {temCestaGrande && (
-          <div className="border border-verde-200 rounded-xl p-4 bg-verde-50 flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold text-verde-800 text-base">
-                🧺 Cesta Grande
-              </h3>
-              <span className="text-verde-700 font-bold text-lg">
-                {formatarPreco(cestaGrande.preco)}
-              </span>
+    <div style={{ height: ALTURA_SECAO, minHeight: ALTURA_MINIMA_SECAO }}>
+      <Container
+        style={estiloSecao}
+        fitHeight
+        header={
+          <Header
+            variant="h1"
+            description="Selecionada com carinho pela COMUNA. A composição pode variar conforme a oferta dos produtores."
+          >
+            🧺 Cesta da Semana
+          </Header>
+        }
+      >
+        {/* Flex simples em vez do ColumnLayout: o ColumnLayout é um
+            <div> de bloco por baixo dos panos, então não repassa
+            altura esticada pros cartões dentro dele. Um flex row com
+            align-items:stretch (o padrão) faz cada coluna — e, em
+            cascata, o fitHeight do CartaoCesta lá dentro — preencher
+            de verdade a altura toda disponível. */}
+        {/* flex-wrap: em tela estreita os cartões empilham (cada um
+            vira uma linha, largura cheia) em vez de espremer os dois
+            lado a lado — mesma ideia responsiva que o ColumnLayout
+            tinha, só que feita à mão. */}
+        <div style={{ height: "100%", display: "flex", flexWrap: "wrap", gap: spaceScaledL }}>
+          {temCestaGrande && (
+            <div style={{ flex: "1 1 280px", minWidth: 0 }}>
+              <CartaoCesta titulo="Cesta Grande" produto={cestaGrande} itens={itenscestaGrande} />
             </div>
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-verde-600">
-                {itenscestaGrande.length}{" "}
-                {itenscestaGrande.length === 1 ? "item" : "itens"} nesta semana
-              </p>
-              {cestaGrande?.quantidade !== undefined && cestaGrande.quantidade > 0 && (
-                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                  cestaGrande.quantidade <= 5
-                    ? "bg-amber-100 text-amber-700"
-                    : "bg-verde-200 text-verde-700"
-                }`}>
-                  {cestaGrande.quantidade <= 5
-                    ? `Últimas ${cestaGrande.quantidade}`
-                    : `${cestaGrande.quantidade} disponíveis`}
-                </span>
-              )}
+          )}
+          {temCestaPequena && (
+            <div style={{ flex: "1 1 280px", minWidth: 0 }}>
+              <CartaoCesta titulo="Cesta Pequena" produto={cestaPequena} itens={itensCestaPequena} />
             </div>
-            {/* Lista de itens da cesta — NÃO é selecionável */}
-            <ul className="space-y-1">
-              {itenscestaGrande.map((item) => (
-                <li key={item.id} className="flex items-center gap-2 text-sm">
-                  <span className="w-1.5 h-1.5 rounded-full bg-verde-500 flex-shrink-0" />
-                  <span className="text-gray-700">{item.nome}</span>
-                </li>
-              ))}
-            </ul>
-            <button
-              onClick={() => adicionar(cestaGrande)}
-              disabled={estaNoCarrinho(cestaGrande.id)}
-              className={`w-full mt-auto py-2 rounded-lg font-semibold text-sm transition-colors ${
-                estaNoCarrinho(cestaGrande.id)
-                  ? "bg-verde-200 text-verde-600 cursor-default"
-                  : "bg-verde-600 hover:bg-verde-700 text-white active:scale-95"
-              }`}
-            >
-              {estaNoCarrinho(cestaGrande.id)
-                ? "✓ Adicionada ao carrinho"
-                : "Quero a Cesta Grande"}
-            </button>
-          </div>
-        )}
-
-        {/* ── Cesta Pequena ────────────────────────── */}
-        {temCestaPequena && (
-          <div className="border border-terra-200 rounded-xl p-4 bg-terra-50 flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold text-terra-800 text-base">
-                🧺 Cesta Pequena
-              </h3>
-              <span className="text-terra-700 font-bold text-lg">
-                {formatarPreco(cestaPequena.preco)}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-terra-600">
-                {itensCestaPequena.length}{" "}
-                {itensCestaPequena.length === 1 ? "item" : "itens"} nesta semana
-              </p>
-              {cestaPequena?.quantidade !== undefined && cestaPequena.quantidade > 0 && (
-                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                  cestaPequena.quantidade <= 5
-                    ? "bg-amber-100 text-amber-700"
-                    : "bg-terra-100 text-terra-600"
-                }`}>
-                  {cestaPequena.quantidade <= 5
-                    ? `Últimas ${cestaPequena.quantidade}`
-                    : `${cestaPequena.quantidade} disponíveis`}
-                </span>
-              )}
-            </div>
-            <ul className="space-y-1">
-              {itensCestaPequena.map((item) => (
-                <li key={item.id} className="flex items-center gap-2 text-sm">
-                  <span className="w-1.5 h-1.5 rounded-full bg-terra-400 flex-shrink-0" />
-                  <span className="text-gray-700">{item.nome}</span>
-                </li>
-              ))}
-            </ul>
-            <button
-              onClick={() => adicionar(cestaPequena)}
-              disabled={estaNoCarrinho(cestaPequena.id)}
-              className={`w-full mt-auto py-2 rounded-lg font-semibold text-sm transition-colors ${
-                estaNoCarrinho(cestaPequena.id)
-                  ? "bg-terra-200 text-terra-600 cursor-default"
-                  : "bg-terra-500 hover:bg-terra-600 text-white active:scale-95"
-              }`}
-            >
-              {estaNoCarrinho(cestaPequena.id)
-                ? "✓ Adicionada ao carrinho"
-                : "Quero a Cesta Pequena"}
-            </button>
-          </div>
-        )}
-      </div>
-    </section>
+          )}
+        </div>
+      </Container>
+    </div>
   );
 }

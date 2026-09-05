@@ -12,7 +12,8 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
-import { salvarPedido, salvarSolicitacoes, descontarEstoque } from "@/lib/google-sheets";
+import { salvarPedido, salvarSolicitacoes, descontarEstoque } from "@/lib/db";
+import { precoEfetivo } from "@/lib/formatadores";
 import type { ItemCarrinho } from "@/lib/types";
 
 export async function POST(request: NextRequest) {
@@ -46,7 +47,7 @@ export async function POST(request: NextRequest) {
       .map(
         (item) =>
           `${item.quantidade}x ${item.produto.nome} (${item.produto.unidade}) — R$ ${(
-            item.produto.preco * item.quantidade
+            precoEfetivo(item.produto) * item.quantidade
           ).toFixed(2).replace(".", ",")}`
       )
       .join("\n");

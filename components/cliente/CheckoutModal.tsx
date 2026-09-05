@@ -1,9 +1,20 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Modal from "@cloudscape-design/components/modal";
+import Box from "@cloudscape-design/components/box";
+import Button from "@cloudscape-design/components/button";
+import FormField from "@cloudscape-design/components/form-field";
+import Input from "@cloudscape-design/components/input";
+import Textarea from "@cloudscape-design/components/textarea";
+import RadioGroup from "@cloudscape-design/components/radio-group";
+import Alert from "@cloudscape-design/components/alert";
+import SpaceBetween from "@cloudscape-design/components/space-between";
+import Container from "@cloudscape-design/components/container";
 import { useCarrinho } from "@/lib/carrinho-context";
 import { useLoja } from "@/lib/loja-context";
 import { WHATSAPP_NUMERO as WHATSAPP_NUMERO_PADRAO, ENDERECO_RETIRADA } from "@/lib/dados";
+import { precoEfetivo } from "@/lib/formatadores";
 import type { DadosCliente } from "@/lib/types";
 
 interface CheckoutModalProps {
@@ -19,11 +30,13 @@ function formatarPreco(valor: number): string {
 //
 // Fluxo:
 // 1. Cliente preenche nome, celular, tipo de entrega
-// 2. Clica em "Enviar Pedido"
-// 3. App monta a mensagem e abre o WhatsApp
+// 2. Clica em "Revisar Pedido"
+// 3. Confirma e o app monta a mensagem e abre o WhatsApp
 //
-// A mensagem do WhatsApp é construída como uma string formatada.
-// Analogia Python: f"""...""" com .join() para a lista de itens
+// Fica com estado manual de 2 passos (não o componente Wizard do
+// Cloudscape) — pra um fluxo de só 2 etapas dentro de um Modal, um
+// Wizard some com o header/footer do próprio Modal e adiciona mais
+// integração do que resolve.
 // ============================================================
 export default function CheckoutModal({ onFechar }: CheckoutModalProps) {
   const { itens, totalPreco, limpar } = useCarrinho();
@@ -36,13 +49,8 @@ export default function CheckoutModal({ onFechar }: CheckoutModalProps) {
     produtosSolicitados: "",
     observacoes: "",
   });
-  const [etapa, setEtapa] = useState<"formulario" | "confirmacao">(
-    "formulario"
-  );
+  const [etapa, setEtapa] = useState<"formulario" | "confirmacao">("formulario");
   const [salvandoPedido, setSalvandoPedido] = useState(false);
-  // Número de WhatsApp vindo da planilha (aba Configurações). Começa com o
-  // valor padrão do código e é substituído assim que a API responde —
-  // se ela falhar, o padrão garante que o checkout nunca fique bloqueado.
   const [whatsappNumero, setWhatsappNumero] = useState(WHATSAPP_NUMERO_PADRAO);
 
   useEffect(() => {
@@ -59,23 +67,17 @@ export default function CheckoutModal({ onFechar }: CheckoutModalProps) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!dados.nome.trim() || !dados.celular.trim()) return;
-    if (dados.tipoEntrega === "entrega" && !dados.enderecoEntrega?.trim())
-      return;
+    if (dados.tipoEntrega === "entrega" && !dados.enderecoEntrega?.trim()) return;
     setEtapa("confirmacao");
   }
 
-  // Grava o pedido na planilha do Google Sheets e depois abre o WhatsApp.
-  // É assíncrona porque precisamos aguardar a resposta da API.
-  // Analogia Python: async def enviar_whatsapp(): await salvar_pedido(); abrir_wpp()
   async function enviarWhatsApp() {
     setSalvandoPedido(true);
 
-    // Monta a mensagem linha a linha
-    // Analogia Python: '\n'.join([linha1, linha2, ...])
     const linhasItens = itens
       .map(
         (item) =>
-          `• ${item.quantidade}x ${item.produto.nome} (${item.produto.unidade}) — ${formatarPreco(item.produto.preco * item.quantidade)}`
+          `• ${item.quantidade}x ${item.produto.nome} (${item.produto.unidade}) — ${formatarPreco(precoEfetivo(item.produto) * item.quantidade)}`
       )
       .join("\n");
 
@@ -84,17 +86,12 @@ export default function CheckoutModal({ onFechar }: CheckoutModalProps) {
         ? `Retirada em: ${ENDERECO_RETIRADA}`
         : `Entrega no endereço: ${dados.enderecoEntrega}`;
 
-    const observacoesTexto = dados.observacoes
-      ? `\n📝 Observações: ${dados.observacoes}`
-      : "";
+    const observacoesTexto = dados.observacoes ? `\n📝 Observações: ${dados.observacoes}` : "";
 
     const solicitacoesTexto = dados.produtosSolicitados
       ? `\n\n🛍️ *Produtos Solicitados:*\n${dados.produtosSolicitados}`
       : "";
 
-    // ── Grava na planilha do Google Sheets ───────────────────
-    // Se a API falhar, o pedido ainda segue via WhatsApp normalmente.
-    // Analogia Python: try: salvar_pedido() except Exception: pass
     try {
       await fetch("/api/pedidos", {
         method: "POST",
@@ -107,15 +104,13 @@ export default function CheckoutModal({ onFechar }: CheckoutModalProps) {
           produtosSolicitados: dados.produtosSolicitados,
           observacoes: dados.observacoes,
           totalPreco,
-          itens, // array de ItemCarrinho — a API converte para texto legível
+          itens,
         }),
       });
     } catch (erro) {
-      // Falha silenciosa: o WhatsApp ainda abre. Elizete vê o pedido lá.
-      console.error("Falha ao gravar pedido na planilha:", erro);
+      console.error("Falha ao gravar pedido:", erro);
     }
 
-    // Desconta quantidades no contexto local para refletir na tela imediatamente
     itens.forEach((item) => {
       const novaQtd = Math.max(0, (item.produto.quantidade ?? 0) - item.quantidade);
       atualizarQuantidade(item.produto.id, novaQtd);
@@ -139,7 +134,6 @@ ${linhasItens}
 
 ⚠️ _Disponibilidade sujeita a confirmação no momento da separação._`;
 
-    // encodeURIComponent é como urllib.parse.quote() em Python
     const url = `https://wa.me/${whatsappNumero}?text=${encodeURIComponent(mensagem)}`;
     window.open(url, "_blank");
     limpar();
@@ -147,237 +141,146 @@ ${linhasItens}
   }
 
   return (
-    // Overlay escuro — clique fora fecha o modal
-    <div
-      className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onFechar();
-      }}
+    <Modal
+      visible
+      onDismiss={onFechar}
+      header={etapa === "formulario" ? "Seus dados" : "Confirmar pedido"}
+      size="medium"
     >
-      <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl">
-        {/* Header do modal */}
-        <div className="flex items-center justify-between p-5 border-b border-gray-100">
-          <h2 className="font-bold text-verde-700 text-lg">
-            {etapa === "formulario" ? "Seus dados" : "Confirmar pedido"}
-          </h2>
-          <button
-            onClick={onFechar}
-            className="text-gray-400 hover:text-gray-600 text-xl leading-none"
-            aria-label="Fechar"
-          >
-            ✕
-          </button>
-        </div>
-
-        {/* ── Etapa 1: Formulário ────────────────────── */}
-        {etapa === "formulario" && (
-          <form onSubmit={handleSubmit} className="p-5 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Nome completo *
-              </label>
-              <input
-                type="text"
-                required
+      {etapa === "formulario" && (
+        <form onSubmit={handleSubmit}>
+          <SpaceBetween size="m">
+            <FormField label="Nome completo *">
+              <Input
                 value={dados.nome}
-                onChange={(e) => setDados({ ...dados, nome: e.target.value })}
+                onChange={({ detail }) => setDados({ ...dados, nome: detail.value })}
                 placeholder="Seu nome"
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-verde-300"
               />
-            </div>
+            </FormField>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Celular / WhatsApp *
-              </label>
-              <input
-                type="tel"
-                required
+            <FormField label="Celular / WhatsApp *">
+              <Input
+                inputMode="tel"
                 value={dados.celular}
-                onChange={(e) =>
-                  setDados({ ...dados, celular: e.target.value })
-                }
+                onChange={({ detail }) => setDados({ ...dados, celular: detail.value })}
                 placeholder="(19) 99999-9999"
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-verde-300"
               />
-            </div>
+            </FormField>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Como prefere receber? *
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <label
-                  className={`flex items-center gap-2 p-3 rounded-xl border-2 cursor-pointer transition-colors ${
-                    dados.tipoEntrega === "retirada"
-                      ? "border-verde-500 bg-verde-50"
-                      : "border-gray-200 hover:border-verde-200"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="tipoEntrega"
-                    value="retirada"
-                    checked={dados.tipoEntrega === "retirada"}
-                    onChange={() =>
-                      setDados({ ...dados, tipoEntrega: "retirada" })
-                    }
-                    className="accent-verde-600"
-                  />
-                  <div>
-                    <p className="text-sm font-medium">🏠 Retirada</p>
-                    <p className="text-xs text-gray-500">{ENDERECO_RETIRADA}</p>
-                  </div>
-                </label>
-
-                <label
-                  className={`flex items-center gap-2 p-3 rounded-xl border-2 cursor-pointer transition-colors ${
-                    dados.tipoEntrega === "entrega"
-                      ? "border-verde-500 bg-verde-50"
-                      : "border-gray-200 hover:border-verde-200"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="tipoEntrega"
-                    value="entrega"
-                    checked={dados.tipoEntrega === "entrega"}
-                    onChange={() =>
-                      setDados({ ...dados, tipoEntrega: "entrega" })
-                    }
-                    className="accent-verde-600"
-                  />
-                  <div>
-                    <p className="text-sm font-medium">🚚 Entrega</p>
-                    <p className="text-xs text-gray-500">Via COMUNA</p>
-                  </div>
-                </label>
-              </div>
-            </div>
+            <FormField label="Como prefere receber? *">
+              <RadioGroup
+                value={dados.tipoEntrega}
+                onChange={({ detail }) =>
+                  setDados({ ...dados, tipoEntrega: detail.value as "retirada" | "entrega" })
+                }
+                items={[
+                  {
+                    value: "retirada",
+                    label: "🏠 Retirada",
+                    description: ENDERECO_RETIRADA,
+                  },
+                  {
+                    value: "entrega",
+                    label: "🚚 Entrega",
+                    description: "Via COMUNA",
+                  },
+                ]}
+              />
+            </FormField>
 
             {dados.tipoEntrega === "entrega" && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Endereço de entrega *
-                </label>
-                <textarea
-                  required
-                  value={dados.enderecoEntrega}
-                  onChange={(e) =>
-                    setDados({ ...dados, enderecoEntrega: e.target.value })
-                  }
+              <FormField label="Endereço de entrega *">
+                <Textarea
+                  value={dados.enderecoEntrega ?? ""}
+                  onChange={({ detail }) => setDados({ ...dados, enderecoEntrega: detail.value })}
                   placeholder="Rua, número, bairro, cidade..."
                   rows={3}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-verde-300 resize-none"
                 />
-              </div>
+              </FormField>
             )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Gostaria de algum produto que não encontrou?
-              </label>
-              <textarea
-                value={dados.produtosSolicitados}
-                onChange={(e) =>
-                  setDados({ ...dados, produtosSolicitados: e.target.value })
+            <FormField label="Gostaria de algum produto que não encontrou?">
+              <Textarea
+                value={dados.produtosSolicitados ?? ""}
+                onChange={({ detail }) =>
+                  setDados({ ...dados, produtosSolicitados: detail.value })
                 }
                 placeholder="Insira o nome de algum produto que não encontrou"
                 rows={2}
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-verde-300 resize-none"
               />
-            </div>
+            </FormField>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Observações (opcional)
-              </label>
-              <textarea
-                value={dados.observacoes}
-                onChange={(e) =>
-                  setDados({ ...dados, observacoes: e.target.value })
-                }
+            <FormField label="Observações (opcional)">
+              <Textarea
+                value={dados.observacoes ?? ""}
+                onChange={({ detail }) => setDados({ ...dados, observacoes: detail.value })}
                 placeholder="Ex: Horário para entrega, Observação sobre o pedido"
                 rows={2}
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-verde-300 resize-none"
               />
-            </div>
+            </FormField>
 
-            <button type="submit" className="w-full btn-primary">
+            <Button variant="primary" fullWidth formAction="submit">
               Revisar Pedido →
-            </button>
-          </form>
-        )}
+            </Button>
+          </SpaceBetween>
+        </form>
+      )}
 
-        {/* ── Etapa 2: Confirmação ───────────────────── */}
-        {etapa === "confirmacao" && (
-          <div className="p-5 space-y-4">
-            {/* Resumo do cliente */}
-            <div className="bg-verde-50 rounded-xl p-3 text-sm space-y-1">
-              <p>
-                <span className="font-medium">👤</span> {dados.nome}
-              </p>
-              <p>
-                <span className="font-medium">📱</span> {dados.celular}
-              </p>
-              <p>
-                <span className="font-medium">
-                  {dados.tipoEntrega === "retirada" ? "🏠" : "🚚"}
-                </span>{" "}
+      {etapa === "confirmacao" && (
+        <SpaceBetween size="m">
+          <Container>
+            <SpaceBetween size="xs">
+              <Box>👤 {dados.nome}</Box>
+              <Box>📱 {dados.celular}</Box>
+              <Box>
+                {dados.tipoEntrega === "retirada" ? "🏠" : "🚚"}{" "}
                 {dados.tipoEntrega === "retirada"
                   ? `Retirada — ${ENDERECO_RETIRADA}`
                   : `Entrega — ${dados.enderecoEntrega}`}
-              </p>
-            </div>
+              </Box>
+            </SpaceBetween>
+          </Container>
 
-            {/* Lista de itens */}
-            <div className="space-y-2 max-h-48 overflow-y-auto">
+          <div style={{ maxHeight: 192, overflowY: "auto" }}>
+            <SpaceBetween size="xs">
               {itens.map((item) => (
-                <div
-                  key={item.produto.id}
-                  className="flex justify-between text-sm"
-                >
-                  <span className="text-gray-700">
-                    {item.quantidade}× {item.produto.nome}
-                  </span>
-                  <span className="font-medium text-verde-700">
-                    {formatarPreco(item.produto.preco * item.quantidade)}
-                  </span>
-                </div>
+                <Box key={item.produto.id} display="inline-block">
+                  <SpaceBetween direction="horizontal" size="xs">
+                    <Box color="text-body-secondary">
+                      {item.quantidade}× {item.produto.nome}
+                    </Box>
+                    <Box fontWeight="bold" color="text-status-success">
+                      {formatarPreco(precoEfetivo(item.produto) * item.quantidade)}
+                    </Box>
+                  </SpaceBetween>
+                </Box>
               ))}
-            </div>
-
-            <div className="flex justify-between font-bold border-t pt-2">
-              <span>Total estimado</span>
-              <span className="text-verde-700">{formatarPreco(totalPreco)}</span>
-            </div>
-
-            {/* Aviso de disponibilidade — obrigatório por requisito */}
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
-              ⚠️ <strong>Atenção:</strong> A disponibilidade final dos produtos
-              avulsos está sujeita a confirmação no momento da separação do
-              pedido. A COMUNA entrará em contato caso haja alguma alteração.
-            </div>
-
-            <div className="flex gap-2">
-              <button
-                onClick={() => setEtapa("formulario")}
-                className="flex-1 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
-              >
-                ← Voltar
-              </button>
-              <button
-                onClick={enviarWhatsApp}
-                disabled={salvandoPedido}
-                className="flex-1 btn-primary flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                <span>📲</span>
-                {salvandoPedido ? "Registrando pedido..." : "Enviar via WhatsApp"}
-              </button>
-            </div>
+            </SpaceBetween>
           </div>
-        )}
-      </div>
-    </div>
+
+          <Box display="inline-block">
+            <SpaceBetween direction="horizontal" size="xs" alignItems="center">
+              <Box fontWeight="bold">Total estimado</Box>
+              <Box fontWeight="bold" color="text-status-success">
+                {formatarPreco(totalPreco)}
+              </Box>
+            </SpaceBetween>
+          </Box>
+
+          <Alert type="warning" header="Atenção">
+            A disponibilidade final dos produtos avulsos está sujeita a confirmação no
+            momento da separação do pedido. A COMUNA entrará em contato caso haja alguma
+            alteração.
+          </Alert>
+
+          <SpaceBetween direction="horizontal" size="xs">
+            <Button onClick={() => setEtapa("formulario")}>← Voltar</Button>
+            <Button onClick={enviarWhatsApp} disabled={salvandoPedido} variant="primary">
+              📲 {salvandoPedido ? "Registrando pedido..." : "Enviar via WhatsApp"}
+            </Button>
+          </SpaceBetween>
+        </SpaceBetween>
+      )}
+    </Modal>
   );
 }

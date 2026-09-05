@@ -1,15 +1,29 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Table from "@cloudscape-design/components/table";
+import Container from "@cloudscape-design/components/container";
+import Header from "@cloudscape-design/components/header";
+import Box from "@cloudscape-design/components/box";
+import Input from "@cloudscape-design/components/input";
+import Checkbox from "@cloudscape-design/components/checkbox";
+import ColumnLayout from "@cloudscape-design/components/column-layout";
+import SpaceBetween from "@cloudscape-design/components/space-between";
+import { spaceScaledXs } from "@cloudscape-design/design-tokens";
 import { useLoja } from "@/lib/loja-context";
+import type { Produto } from "@/lib/types";
 
 export default function MontarCesta() {
-  const { estado, toggleCestaGrande, toggleCestaPequena, atualizarPreco, atualizarQuantidade } = useLoja();
+  const {
+    estado,
+    toggleCestaGrande,
+    toggleCestaPequena,
+    atualizarPreco,
+    atualizarPrecoReal,
+    atualizarQuantidade,
+  } = useLoja();
   const [busca, setBusca] = useState("");
   const [salvando, setSalvando] = useState<Record<string, boolean>>({});
-  const [erros, setErros] = useState<Record<string, string>>({});
-  const [salvandoCesta, setSalvandoCesta] = useState<Record<string, boolean>>({});
-  const [erroCesta, setErroCesta] = useState<Record<string, string>>({});
 
   const cestaGrande = estado.produtos.find((p) => p.id === "cesta-grande");
   const cestaPequena = estado.produtos.find((p) => p.id === "cesta-pequena");
@@ -17,47 +31,53 @@ export default function MontarCesta() {
   async function salvarPreco(produtoId: string, novoPreco: number) {
     if (isNaN(novoPreco) || novoPreco <= 0) return;
     atualizarPreco(produtoId, novoPreco);
-    setSalvandoCesta((s) => ({ ...s, [`preco-${produtoId}`]: true }));
-    setErroCesta((e) => { const n = { ...e }; delete n[`preco-${produtoId}`]; return n; });
     try {
-      const res = await fetch("/api/admin/preco", {
+      await fetch("/api/admin/preco", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ produtoId, preco: novoPreco }),
       });
-      if (!res.ok) throw new Error();
-    } catch {
-      setErroCesta((e) => ({ ...e, [`preco-${produtoId}`]: "Erro ao salvar" }));
-    } finally {
-      setSalvandoCesta((s) => { const n = { ...s }; delete n[`preco-${produtoId}`]; return n; });
+    } catch (erro) {
+      console.error("[MontarCesta] Falha ao salvar preço:", erro);
+    }
+  }
+
+  // Campo vazio limpa o desconto (volta a mostrar só o preço base).
+  async function salvarPrecoReal(produtoId: string, valorDigitado: string) {
+    const v = valorDigitado.trim();
+    const novoPrecoReal = v === "" ? null : parseFloat(v);
+    if (novoPrecoReal !== null && isNaN(novoPrecoReal)) return;
+    if (novoPrecoReal !== null && novoPrecoReal < 0) return;
+    atualizarPrecoReal(produtoId, novoPrecoReal);
+    try {
+      await fetch("/api/admin/preco-real", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ produtoId, precoReal: novoPrecoReal }),
+      });
+    } catch (erro) {
+      console.error("[MontarCesta] Falha ao salvar preço com desconto:", erro);
     }
   }
 
   async function salvarQuantidadeCesta(produtoId: string, novaQtd: number) {
     const qtd = Math.max(0, novaQtd);
     atualizarQuantidade(produtoId, qtd);
-    setSalvandoCesta((s) => ({ ...s, [`qtd-${produtoId}`]: true }));
-    setErroCesta((e) => { const n = { ...e }; delete n[`qtd-${produtoId}`]; return n; });
     try {
-      const res = await fetch("/api/admin/estoque", {
+      await fetch("/api/admin/estoque", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ produtoId, quantidade: qtd }),
       });
-      if (!res.ok) throw new Error();
-    } catch {
-      setErroCesta((e) => ({ ...e, [`qtd-${produtoId}`]: "Erro ao salvar" }));
-    } finally {
-      setSalvandoCesta((s) => { const n = { ...s }; delete n[`qtd-${produtoId}`]; return n; });
+    } catch (erro) {
+      console.error("[MontarCesta] Falha ao salvar quantidade:", erro);
     }
   }
 
   const produtosParaCesta = useMemo(() => {
     return estado.produtos
       .filter((p) => p.categoria !== "Cestas")
-      .filter(
-        (p) => busca === "" || p.nome.toLowerCase().includes(busca.toLowerCase())
-      )
+      .filter((p) => busca === "" || p.nome.toLowerCase().includes(busca.toLowerCase()))
       .sort((a, b) => {
         const aSelecionado = a.naCestaGrande || a.naCestaPequena ? 0 : 1;
         const bSelecionado = b.naCestaGrande || b.naCestaPequena ? 0 : 1;
@@ -74,14 +94,11 @@ export default function MontarCesta() {
     campo: "naCestaGrande" | "naCestaPequena",
     novoValor: boolean
   ) {
-    // Atualiza a UI imediatamente (otimista)
     if (campo === "naCestaGrande") toggleCestaGrande(produtoId);
     else toggleCestaPequena(produtoId);
 
     const chave = `${produtoId}-${campo}`;
     setSalvando((s) => ({ ...s, [chave]: true }));
-    setErros((e) => { const novo = { ...e }; delete novo[chave]; return novo; });
-
     try {
       const res = await fetch("/api/admin/cesta", {
         method: "PATCH",
@@ -89,215 +106,182 @@ export default function MontarCesta() {
         body: JSON.stringify({ produtoId, campo, valor: novoValor }),
       });
       if (!res.ok) throw new Error("Falha ao salvar");
-    } catch {
-      setErros((e) => ({ ...e, [chave]: "Erro ao salvar" }));
+    } catch (erro) {
+      console.error("[MontarCesta] Falha ao salvar cesta:", erro);
     } finally {
-      setSalvando((s) => { const novo = { ...s }; delete novo[chave]; return novo; });
+      setSalvando((s) => {
+        const novo = { ...s };
+        delete novo[chave];
+        return novo;
+      });
     }
   }
 
   return (
-    <div className="space-y-4">
+    <SpaceBetween size="m">
       {/* Resumo das cestas */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="bg-verde-50 border border-verde-200 rounded-xl p-3 text-center">
-          <p className="text-2xl font-bold text-verde-700">{totalGrande}</p>
-          <p className="text-xs text-verde-600">itens na Cesta Grande</p>
-          <p className="text-xs text-gray-400 mt-0.5">(meta: 10–12)</p>
-        </div>
-        <div className="bg-terra-50 border border-terra-200 rounded-xl p-3 text-center">
-          <p className="text-2xl font-bold text-terra-600">{totalPequena}</p>
-          <p className="text-xs text-terra-500">itens na Cesta Pequena</p>
-          <p className="text-xs text-gray-400 mt-0.5">(meta: 9–10)</p>
-        </div>
-      </div>
+      <ColumnLayout columns={2}>
+        <Box textAlign="center" padding="s">
+          <Box fontWeight="bold" fontSize="heading-xl" color="text-status-success">
+            {totalGrande}
+          </Box>
+          <Box fontSize="body-s" color="text-body-secondary">
+            itens na Cesta Grande (meta: 10–12)
+          </Box>
+        </Box>
+        <Box textAlign="center" padding="s">
+          <Box fontWeight="bold" fontSize="heading-xl" color="text-status-warning">
+            {totalPequena}
+          </Box>
+          <Box fontSize="body-s" color="text-body-secondary">
+            itens na Cesta Pequena (meta: 9–10)
+          </Box>
+        </Box>
+      </ColumnLayout>
 
       {/* Configurações de preço e quantidade das cestas */}
-      <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Configurações das Cestas</p>
-        <div className="grid grid-cols-2 gap-3">
-          {/* Cesta Grande */}
+      <Container header={<Header variant="h3">Configurações das Cestas</Header>}>
+        <ColumnLayout columns={2}>
           {cestaGrande && (
-            <div className="space-y-2">
-              <p className="text-sm font-semibold text-verde-700">🧺 Cesta Grande</p>
-              <div>
-                <label className="text-xs text-gray-500 mb-1 block">Preço</label>
-                <div className="flex items-center gap-1">
-                  <span className="text-xs text-gray-500">R$</span>
-                  <input
-                    type="number"
-                    defaultValue={cestaGrande.preco}
-                    min="0"
-                    step="0.50"
-                    onBlur={(e) => salvarPreco("cesta-grande", parseFloat(e.target.value))}
-                    onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
-                    className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-verde-300"
-                  />
-                </div>
-                {salvandoCesta["preco-cesta-grande"] && <p className="text-xs text-gray-400">salvando...</p>}
-                {erroCesta["preco-cesta-grande"] && <p className="text-xs text-red-500">{erroCesta["preco-cesta-grande"]}</p>}
+            <SpaceBetween size="s">
+              <Box fontWeight="bold">🧺 Cesta Grande</Box>
+              <div style={{ display: "flex", alignItems: "center", gap: spaceScaledXs }}>
+                <Box>R$</Box>
+                <Input
+                  type="number"
+                  step={0.5}
+                  value={String(cestaGrande.preco)}
+                  onChange={({ detail }) => {
+                    const v = parseFloat(detail.value);
+                    if (!isNaN(v)) salvarPreco("cesta-grande", v);
+                  }}
+                />
               </div>
               <div>
-                <label className="text-xs text-gray-500 mb-1 block">Qtd. disponível</label>
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => salvarQuantidadeCesta("cesta-grande", (cestaGrande.quantidade ?? 0) - 1)}
-                    disabled={!cestaGrande.quantidade}
-                    className="w-7 h-7 rounded-md bg-gray-100 hover:bg-red-100 text-gray-600 hover:text-red-600 font-bold text-sm flex items-center justify-center disabled:opacity-40"
-                  >−</button>
-                  <input
+                <Box fontSize="body-s" color="text-body-secondary">
+                  Preço com desconto (opcional)
+                </Box>
+                <div style={{ display: "flex", alignItems: "center", gap: spaceScaledXs }}>
+                  <Box>R$</Box>
+                  <Input
                     type="number"
-                    value={cestaGrande.quantidade ?? 0}
-                    min="0"
-                    onChange={(e) => salvarQuantidadeCesta("cesta-grande", parseInt(e.target.value) || 0)}
-                    className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-verde-300"
+                    step={0.5}
+                    placeholder="Sem desconto"
+                    value={cestaGrande.precoReal !== undefined ? String(cestaGrande.precoReal) : ""}
+                    onChange={({ detail }) => salvarPrecoReal("cesta-grande", detail.value)}
                   />
-                  <button
-                    onClick={() => salvarQuantidadeCesta("cesta-grande", (cestaGrande.quantidade ?? 0) + 1)}
-                    className="w-7 h-7 rounded-md bg-gray-100 hover:bg-verde-100 text-gray-600 hover:text-verde-700 font-bold text-sm flex items-center justify-center"
-                  >+</button>
                 </div>
-                {salvandoCesta["qtd-cesta-grande"] && <p className="text-xs text-gray-400">salvando...</p>}
-                {erroCesta["qtd-cesta-grande"] && <p className="text-xs text-red-500">{erroCesta["qtd-cesta-grande"]}</p>}
               </div>
-            </div>
+              <div style={{ display: "flex", alignItems: "center", gap: spaceScaledXs }}>
+                <Input
+                  type="number"
+                  value={String(cestaGrande.quantidade ?? 0)}
+                  onChange={({ detail }) =>
+                    salvarQuantidadeCesta("cesta-grande", parseInt(detail.value, 10) || 0)
+                  }
+                />
+              </div>
+            </SpaceBetween>
           )}
 
-          {/* Cesta Pequena */}
           {cestaPequena && (
-            <div className="space-y-2">
-              <p className="text-sm font-semibold text-terra-600">🧺 Cesta Pequena</p>
-              <div>
-                <label className="text-xs text-gray-500 mb-1 block">Preço</label>
-                <div className="flex items-center gap-1">
-                  <span className="text-xs text-gray-500">R$</span>
-                  <input
-                    type="number"
-                    defaultValue={cestaPequena.preco}
-                    min="0"
-                    step="0.50"
-                    onBlur={(e) => salvarPreco("cesta-pequena", parseFloat(e.target.value))}
-                    onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
-                    className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-terra-300"
-                  />
-                </div>
-                {salvandoCesta["preco-cesta-pequena"] && <p className="text-xs text-gray-400">salvando...</p>}
-                {erroCesta["preco-cesta-pequena"] && <p className="text-xs text-red-500">{erroCesta["preco-cesta-pequena"]}</p>}
+            <SpaceBetween size="s">
+              <Box fontWeight="bold">🧺 Cesta Pequena</Box>
+              <div style={{ display: "flex", alignItems: "center", gap: spaceScaledXs }}>
+                <Box>R$</Box>
+                <Input
+                  type="number"
+                  step={0.5}
+                  value={String(cestaPequena.preco)}
+                  onChange={({ detail }) => {
+                    const v = parseFloat(detail.value);
+                    if (!isNaN(v)) salvarPreco("cesta-pequena", v);
+                  }}
+                />
               </div>
               <div>
-                <label className="text-xs text-gray-500 mb-1 block">Qtd. disponível</label>
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => salvarQuantidadeCesta("cesta-pequena", (cestaPequena.quantidade ?? 0) - 1)}
-                    disabled={!cestaPequena.quantidade}
-                    className="w-7 h-7 rounded-md bg-gray-100 hover:bg-red-100 text-gray-600 hover:text-red-600 font-bold text-sm flex items-center justify-center disabled:opacity-40"
-                  >−</button>
-                  <input
+                <Box fontSize="body-s" color="text-body-secondary">
+                  Preço com desconto (opcional)
+                </Box>
+                <div style={{ display: "flex", alignItems: "center", gap: spaceScaledXs }}>
+                  <Box>R$</Box>
+                  <Input
                     type="number"
-                    value={cestaPequena.quantidade ?? 0}
-                    min="0"
-                    onChange={(e) => salvarQuantidadeCesta("cesta-pequena", parseInt(e.target.value) || 0)}
-                    className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-terra-300"
+                    step={0.5}
+                    placeholder="Sem desconto"
+                    value={cestaPequena.precoReal !== undefined ? String(cestaPequena.precoReal) : ""}
+                    onChange={({ detail }) => salvarPrecoReal("cesta-pequena", detail.value)}
                   />
-                  <button
-                    onClick={() => salvarQuantidadeCesta("cesta-pequena", (cestaPequena.quantidade ?? 0) + 1)}
-                    className="w-7 h-7 rounded-md bg-gray-100 hover:bg-verde-100 text-gray-600 hover:text-verde-700 font-bold text-sm flex items-center justify-center"
-                  >+</button>
                 </div>
-                {salvandoCesta["qtd-cesta-pequena"] && <p className="text-xs text-gray-400">salvando...</p>}
-                {erroCesta["qtd-cesta-pequena"] && <p className="text-xs text-red-500">{erroCesta["qtd-cesta-pequena"]}</p>}
               </div>
-            </div>
+              <div style={{ display: "flex", alignItems: "center", gap: spaceScaledXs }}>
+                <Input
+                  type="number"
+                  value={String(cestaPequena.quantidade ?? 0)}
+                  onChange={({ detail }) =>
+                    salvarQuantidadeCesta("cesta-pequena", parseInt(detail.value, 10) || 0)
+                  }
+                />
+              </div>
+            </SpaceBetween>
           )}
-        </div>
-      </div>
+        </ColumnLayout>
+      </Container>
 
-      {/* Barra de busca */}
-      <div className="relative">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
-        <input
-          type="text"
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
-          placeholder="Buscar produto para adicionar à cesta..."
-          className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-verde-300"
-        />
-      </div>
+      <Input
+        type="search"
+        value={busca}
+        onChange={({ detail }) => setBusca(detail.value)}
+        placeholder="Buscar produto para adicionar à cesta..."
+      />
 
-      {/* Legenda das colunas */}
-      <div className="grid grid-cols-[1fr_80px_80px] gap-2 text-xs font-semibold text-gray-500 uppercase px-1">
-        <span>Produto</span>
-        <span className="text-center text-verde-600">Grande</span>
-        <span className="text-center text-terra-500">Pequena</span>
-      </div>
-
-      {/* Lista de produtos */}
-      <div className="space-y-1 max-h-[500px] overflow-y-auto">
-        {produtosParaCesta.map((produto) => {
-          const chaveGrande = `${produto.id}-naCestaGrande`;
-          const chavePequena = `${produto.id}-naCestaPequena`;
-
-          return (
-            <div
-              key={produto.id}
-              className={`grid grid-cols-[1fr_80px_80px] gap-2 items-center px-3 py-2 rounded-xl transition-colors ${
-                produto.naCestaGrande || produto.naCestaPequena
-                  ? "bg-verde-50"
-                  : "hover:bg-gray-50"
-              }`}
-            >
-              {/* Nome do produto */}
-              <div>
-                <p className="text-sm font-medium text-gray-800">{produto.nome}</p>
-                <p className="text-xs text-gray-400">{produto.categoria}</p>
-                {(erros[chaveGrande] || erros[chavePequena]) && (
-                  <p className="text-xs text-red-500 mt-0.5">Erro ao salvar</p>
-                )}
-              </div>
-
-              {/* Checkbox Cesta Grande */}
-              <div className="flex justify-center items-center">
-                {salvando[chaveGrande] ? (
-                  <span className="text-xs text-gray-400">...</span>
-                ) : (
-                  <input
-                    type="checkbox"
-                    checked={produto.naCestaGrande}
-                    onChange={() =>
-                      handleToggle(produto.id, "naCestaGrande", !produto.naCestaGrande)
-                    }
-                    className="w-5 h-5 rounded accent-verde-600 cursor-pointer"
-                    aria-label={`Incluir ${produto.nome} na Cesta Grande`}
-                  />
-                )}
-              </div>
-
-              {/* Checkbox Cesta Pequena */}
-              <div className="flex justify-center items-center">
-                {salvando[chavePequena] ? (
-                  <span className="text-xs text-gray-400">...</span>
-                ) : (
-                  <input
-                    type="checkbox"
-                    checked={produto.naCestaPequena}
-                    onChange={() =>
-                      handleToggle(produto.id, "naCestaPequena", !produto.naCestaPequena)
-                    }
-                    className="w-5 h-5 rounded accent-terra-500 cursor-pointer"
-                    aria-label={`Incluir ${produto.nome} na Cesta Pequena`}
-                  />
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {produtosParaCesta.length === 0 && (
-        <p className="text-center text-gray-400 text-sm py-4">
-          Nenhum produto encontrado para &quot;{busca}&quot;.
-        </p>
-      )}
-    </div>
+      <Table<Produto>
+        trackBy="id"
+        items={produtosParaCesta}
+        empty={
+          <Box textAlign="center" color="text-body-secondary" padding="l">
+            Nenhum produto encontrado para &quot;{busca}&quot;.
+          </Box>
+        }
+        columnDefinitions={[
+          {
+            id: "produto",
+            header: "Produto",
+            cell: (p) => (
+              <SpaceBetween size="xxxs">
+                <Box fontWeight="bold">{p.nome}</Box>
+                <Box fontSize="body-s" color="text-body-secondary">
+                  {p.categoria}
+                </Box>
+              </SpaceBetween>
+            ),
+          },
+          {
+            id: "grande",
+            header: "Grande",
+            cell: (p) => (
+              <Checkbox
+                checked={p.naCestaGrande}
+                disabled={salvando[`${p.id}-naCestaGrande`]}
+                onChange={() => handleToggle(p.id, "naCestaGrande", !p.naCestaGrande)}
+                ariaLabel={`Incluir ${p.nome} na Cesta Grande`}
+              />
+            ),
+          },
+          {
+            id: "pequena",
+            header: "Pequena",
+            cell: (p) => (
+              <Checkbox
+                checked={p.naCestaPequena}
+                disabled={salvando[`${p.id}-naCestaPequena`]}
+                onChange={() => handleToggle(p.id, "naCestaPequena", !p.naCestaPequena)}
+                ariaLabel={`Incluir ${p.nome} na Cesta Pequena`}
+              />
+            ),
+          },
+        ]}
+      />
+    </SpaceBetween>
   );
 }

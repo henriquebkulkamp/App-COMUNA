@@ -6,7 +6,7 @@
 // ============================================================
 
 import { NextResponse } from "next/server";
-import { buscarConfigPublica } from "@/lib/google-sheets";
+import { buscarConfigPublica } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 

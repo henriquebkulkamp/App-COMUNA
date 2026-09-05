@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { atualizarPrecoNaPlanilha, invalidarCacheProdutos } from "@/lib/google-sheets";
+import { atualizarPrecoNaPlanilha, invalidarCacheProdutos } from "@/lib/db";
 
 export async function PATCH(request: NextRequest) {
   try {

@@ -1,42 +1,42 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* ============================================================
+   CSS global — sem Tailwind, sem adaptação de cor. O visual do app
+   inteiro vem do tema padrão do Cloudscape (sem nenhum override de
+   token — ver components/shared/CloudscapeThemeInit.tsx). Isso aqui
+   é só o reset básico + um punhado de classes pontuais pros lugares
+   que não têm um primitivo pronto no Cloudscape (hover num item de
+   lista, esconder texto em telas pequenas) — usando os mesmos tons
+   neutros que o próprio Cloudscape usa nesses papéis (neutral-200/250
+   do tema visual-refresh), não cor de marca.
+   ============================================================ */
 
-@layer base {
-  html {
-    font-family: Inter, system-ui, sans-serif;
-  }
-
-  body {
-    @apply bg-creme text-gray-800;
-  }
-
-  /* Remove a seta padrão dos inputs number */
-  input[type="number"]::-webkit-outer-spin-button,
-  input[type="number"]::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
+body {
+  margin: 0;
 }
 
-@layer components {
-  /* Botão primário da cooperativa */
-  .btn-primary {
-    @apply bg-verde-600 hover:bg-verde-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors duration-200 active:scale-95;
-  }
+/* Remove a seta padrão dos inputs number */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
 
-  /* Botão secundário */
-  .btn-secondary {
-    @apply bg-terra-200 hover:bg-terra-300 text-terra-800 font-semibold py-3 px-6 rounded-xl transition-colors duration-200;
-  }
+/* Linha de sugestão de busca (SugestoesBusca) — precisa de :hover,
+   que `style` inline não faz. Mesmo tom que o Cloudscape usa pra
+   hover de item de dropdown (--color-background-dropdown-item-hover). */
+.comuna-sugestao-item {
+  transition: background-color 0.15s;
+}
+.comuna-sugestao-item:hover {
+  background-color: #f3f3f7;
+}
 
-  /* Card de produto */
-  .card-produto {
-    @apply bg-white rounded-2xl shadow-sm border border-verde-100 p-4 flex flex-col gap-3 hover:shadow-md transition-shadow duration-200;
-  }
-
-  /* Badge de categoria */
-  .badge-categoria {
-    @apply text-xs font-medium px-2 py-0.5 rounded-full bg-verde-100 text-verde-700;
+/* Título central do Header no modo admin — some em telas pequenas,
+   igual ao comportamento original (Tailwind `hidden sm:block`). */
+.comuna-header-titulo {
+  display: none;
+}
+@media (min-width: 640px) {
+  .comuna-header-titulo {
+    display: block;
   }
 }
