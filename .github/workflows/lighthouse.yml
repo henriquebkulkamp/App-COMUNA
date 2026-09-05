@@ -9,6 +9,24 @@ jobs:
   lighthouse:
     name: Auditoria Lighthouse
     runs-on: ubuntu-latest
+    # Banco de verdade pro pipeline — sem isso, /api/produtos não tem
+    # DATABASE_URL e cai fora, e a home some sem catálogo.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: comuna
+          POSTGRES_PASSWORD: comuna
+          POSTGRES_DB: comuna
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U comuna -d comuna"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://comuna:comuna@localhost:5432/comuna
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
@@ -21,6 +39,11 @@ jobs:
 
       - name: Instalar dependências
         run: npm ci
+
+      - name: Preparar banco de dados (schema + catálogo de demonstração)
+        run: |
+          node db/migrate.mjs
+          node db/seed.mjs
 
       - name: Build da aplicação
         run: npm run build
