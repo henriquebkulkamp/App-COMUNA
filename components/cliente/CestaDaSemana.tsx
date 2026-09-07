@@ -11,13 +11,10 @@ import {
   spaceScaledM,
   spaceScaledXl,
   spaceScaledXxl,
-  spaceScaledXxs,
-  fontSizeBodyS,
-  colorTextBodySecondary,
 } from "@cloudscape-design/design-tokens";
 import { useLoja } from "@/lib/loja-context";
 import { useCarrinho } from "@/lib/carrinho-context";
-import { formatarPreco, precoEfetivo, temDesconto } from "@/lib/formatadores";
+import Preco from "@/components/design-system/moleculas/Preco";
 import type { Produto } from "@/lib/types";
 
 // Mais respiro que o padrão do Container (que é pensado pra seções
@@ -49,25 +46,7 @@ function CartaoCesta({ titulo, produto, itens }: CartaoCestaProps) {
       header={
         <Header
           variant="h2"
-          actions={
-            <div style={{ display: "flex", alignItems: "baseline", gap: spaceScaledXxs }}>
-              {temDesconto(produto) && (
-                <span
-                  style={{
-                    textDecoration: "line-through",
-                    opacity: 0.6,
-                    color: colorTextBodySecondary,
-                    fontSize: fontSizeBodyS,
-                  }}
-                >
-                  {formatarPreco(produto.preco)}
-                </span>
-              )}
-              <Box variant="span" fontWeight="bold" fontSize="heading-xl">
-                {formatarPreco(precoEfetivo(produto))}
-              </Box>
-            </div>
-          }
+          actions={<Preco valor={produto.preco} valorComDesconto={produto.precoReal} tamanho="grande" />}
         >
           🧺 {titulo}
         </Header>

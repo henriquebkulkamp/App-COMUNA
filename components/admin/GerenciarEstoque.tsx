@@ -10,6 +10,7 @@ import ColumnLayout from "@cloudscape-design/components/column-layout";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { spaceScaledXs, spaceScaledXxs } from "@cloudscape-design/design-tokens";
 import { useLoja } from "@/lib/loja-context";
+import { formatarPreco } from "@/lib/formatadores";
 import AdicionarProduto from "./AdicionarProduto";
 import type { Categoria, Produto } from "@/lib/types";
 
@@ -24,10 +25,6 @@ const CATEGORIAS: Categoria[] = [
   "Pães e Panificação",
   "Mel e Apícolas",
 ];
-
-function formatarPreco(valor: number): string {
-  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
 
 // Botão de remover com confirmação inline (Sim/Não) — mantém o mesmo
 // padrão simples que já existia, só com componentes Cloudscape.

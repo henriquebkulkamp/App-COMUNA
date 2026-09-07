@@ -11,15 +11,9 @@ import {
   spaceScaledXs,
 } from "@cloudscape-design/design-tokens";
 import { useCarrinho } from "@/lib/carrinho-context";
-import { precoEfetivo } from "@/lib/formatadores";
+import { formatarPreco, precoEfetivo } from "@/lib/formatadores";
 import CheckoutModal from "@/components/cliente/CheckoutModal";
-
-function formatarPreco(valor: number): string {
-  return valor.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  });
-}
+import Preco from "@/components/design-system/moleculas/Preco";
 
 // ============================================================
 // Carrinho — só o conteúdo, sem moldura/header próprios: quem chama
@@ -81,9 +75,7 @@ export default function Carrinho() {
 
                 {/* Subtotal do item */}
                 <div style={{ textAlign: "right", minWidth: 72 }}>
-                  <Box fontWeight="bold" color="text-status-success" fontSize="body-s">
-                    {formatarPreco(precoEfetivo(item.produto) * item.quantidade)}
-                  </Box>
+                  <Preco valor={precoEfetivo(item.produto) * item.quantidade} tamanho="pequeno" />
                   <Button
                     onClick={() => remover(item.produto.id)}
                     variant="inline-link"
@@ -100,9 +92,7 @@ export default function Carrinho() {
           <Box display="inline-block">
             <SpaceBetween direction="horizontal" size="xs" alignItems="center">
               <Box fontWeight="bold">Total</Box>
-              <Box fontWeight="bold" fontSize="heading-m" color="text-status-success">
-                {formatarPreco(totalPreco)}
-              </Box>
+              <Preco valor={totalPreco} tamanho="grande" />
             </SpaceBetween>
           </Box>
 

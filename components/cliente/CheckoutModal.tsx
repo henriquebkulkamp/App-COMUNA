@@ -14,15 +14,12 @@ import Container from "@cloudscape-design/components/container";
 import { useCarrinho } from "@/lib/carrinho-context";
 import { useLoja } from "@/lib/loja-context";
 import { WHATSAPP_NUMERO as WHATSAPP_NUMERO_PADRAO, ENDERECO_RETIRADA } from "@/lib/dados";
-import { precoEfetivo } from "@/lib/formatadores";
+import { formatarPreco, precoEfetivo } from "@/lib/formatadores";
+import Preco from "@/components/design-system/moleculas/Preco";
 import type { DadosCliente } from "@/lib/types";
 
 interface CheckoutModalProps {
   onFechar: () => void;
-}
-
-function formatarPreco(valor: number): string {
-  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
 // ============================================================
@@ -249,9 +246,7 @@ ${linhasItens}
                     <Box color="text-body-secondary">
                       {item.quantidade}× {item.produto.nome}
                     </Box>
-                    <Box fontWeight="bold" color="text-status-success">
-                      {formatarPreco(precoEfetivo(item.produto) * item.quantidade)}
-                    </Box>
+                    <Preco valor={precoEfetivo(item.produto) * item.quantidade} tamanho="pequeno" />
                   </SpaceBetween>
                 </Box>
               ))}

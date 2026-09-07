@@ -1,18 +1,14 @@
 "use client";
 
 import Container from "@cloudscape-design/components/container";
-import Box from "@cloudscape-design/components/box";
 import {
   spaceScaledXxxl,
   spaceScaledS,
   spaceScaledXs,
-  spaceScaledXxs,
   borderRadiusContainer,
   fontSizeBodyM,
-  fontSizeBodyS,
-  colorTextBodySecondary,
 } from "@cloudscape-design/design-tokens";
-import { formatarPreco, precoEfetivo, temDesconto } from "@/lib/formatadores";
+import Preco from "@/components/design-system/moleculas/Preco";
 import type { Produto } from "@/lib/types";
 
 // Nenhum token do Cloudscape cobre "tamanho de card de produto" (isso
@@ -53,8 +49,6 @@ interface CartaoProdutoProps {
 // 3. Preço fica logo abaixo do nome, sem vão vazio no meio.
 // ============================================================
 export default function CartaoProduto({ produto, semMoldura = false }: CartaoProdutoProps) {
-  const desconto = temDesconto(produto);
-
   const conteudo = (
     <div
       style={{
@@ -79,6 +73,15 @@ export default function CartaoProduto({ produto, semMoldura = false }: CartaoPro
           // beneficia da otimização/remote-loader do next/image.
           // eslint-disable-next-line @next/next/no-img-element
           <img
+            // `id` aqui não é estilo/acessibilidade — é o que faz o
+            // web-vitals (getSelector.ts) identificar ESSE produto
+            // específico como LCP, em vez do genérico "div>div>img" que
+            // não distingue qual card entre dezenas iguais. A lib para
+            // de subir a árvore assim que acha um `id` e usa só ele
+            // como seletor (ver node_modules/web-vitals/src/lib/getSelector.ts).
+            // Sufixo "destaque"/"avulso" evita `id` duplicado quando o
+            // mesmo produto aparece no carrossel E na grade na mesma página.
+            id={`img-produto-${produto.id}-${semMoldura ? "destaque" : "avulso"}`}
             src={produto.imagemUrl}
             alt={produto.nome}
             style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
@@ -115,35 +118,9 @@ export default function CartaoProduto({ produto, semMoldura = false }: CartaoPro
 
         {/* marginTop:auto ancora o preço embaixo do corpo — robusto a
             pequenas variações de fonte entre navegadores, em vez de
-            depender de acertar o cálculo de altura no milímetro.
-            Com desconto: preço base cortado e mais transparente, preço
-            real em destaque. Sem desconto (ou preço real igual ao
-            base): só o preço normal, como sempre. */}
-        <div
-          style={{
-            marginTop: "auto",
-            paddingTop: spaceScaledXs,
-            display: "flex",
-            alignItems: "baseline",
-            flexWrap: "wrap",
-            gap: spaceScaledXxs,
-          }}
-        >
-          {desconto && (
-            <span
-              style={{
-                textDecoration: "line-through",
-                opacity: 0.6,
-                color: colorTextBodySecondary,
-                fontSize: fontSizeBodyS,
-              }}
-            >
-              {formatarPreco(produto.preco)}
-            </span>
-          )}
-          <Box variant="span" fontWeight="bold" color="text-status-success">
-            {formatarPreco(precoEfetivo(produto))}
-          </Box>
+            depender de acertar o cálculo de altura no milímetro. */}
+        <div style={{ marginTop: "auto", paddingTop: spaceScaledXs }}>
+          <Preco valor={produto.preco} valorComDesconto={produto.precoReal} tamanho="medio" />
         </div>
       </div>
     </div>
