@@ -7,12 +7,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "db:up": "docker compose --env-file .env.local up -d postgres",
+    "db:up": "docker compose --env-file .env.local up -d postgres grafana",
     "db:down": "docker compose --env-file .env.local down",
     "db:migrate": "node db/migrate.mjs",
     "db:seed": "node db/seed.mjs",
     "db:setup": "npm run db:up && node db/aguardar-postgres.mjs && npm run db:migrate && npm run db:seed",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "pretest:lighthouse": "node db/limpar-perf-logs.mjs",
+    "test:lighthouse": "lhci autorun"
   },
   "dependencies": {
     "@cloudscape-design/components": "^3.0.1358",
@@ -22,9 +24,11 @@
     "next": "^15.1.0",
     "pg": "^8.23.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "web-vitals": "^6.2.1"
   },
   "devDependencies": {
+    "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.62.1",
     "@types/node": "^20.17.0",
     "@types/pg": "^8.23.1",
