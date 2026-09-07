@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
+import SecaoInstrumentada from "@/components/shared/SecaoInstrumentada";
 import Container from "@cloudscape-design/components/container";
 import Header from "@/components/shared/Header";
 import Box from "@cloudscape-design/components/box";
@@ -8,7 +10,6 @@ import Button from "@cloudscape-design/components/button";
 import Modal from "@cloudscape-design/components/modal";
 import FormField from "@cloudscape-design/components/form-field";
 import Input from "@cloudscape-design/components/input";
-import Tabs from "@cloudscape-design/components/tabs";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import {
   colorBackgroundLayoutMain,
@@ -21,10 +22,20 @@ import CestaDaSemana from "@/components/cliente/CestaDaSemana";
 import ProdutosDestaque from "@/components/cliente/ProdutosDestaque";
 import ProdutosAvulsos from "@/components/cliente/ProdutosAvulsos";
 import Carrinho from "@/components/shared/Carrinho";
-import MontarCesta from "@/components/admin/MontarCesta";
-import GerenciarEstoque from "@/components/admin/GerenciarEstoque";
-import Configuracoes from "@/components/admin/Configuracoes";
 import { useCarrinho } from "@/lib/carrinho-context";
+
+// Painel da Elizete — Table/ColumnLayout/Checkbox/Select/Textarea (e o
+// próprio Tabs) só existem pra essas 3 telas. Ninguém que visita a loja
+// como cliente autentica como admin, mas até agora esse código (e o CSS
+// que vem junto de cada componente Cloudscape) entrava no bundle inicial
+// de QUALQUER visitante, competindo com o hero/produtos pelo tempo de
+// download+parse antes do primeiro paint. `ssr:false` porque o servidor
+// sempre renderiza a home no estado inicial (autenticado=false, ver
+// abaixo) — o admin só existe depois de interação no cliente.
+const Tabs = dynamic(() => import("@cloudscape-design/components/tabs"), { ssr: false });
+const MontarCesta = dynamic(() => import("@/components/admin/MontarCesta"), { ssr: false });
+const GerenciarEstoque = dynamic(() => import("@/components/admin/GerenciarEstoque"), { ssr: false });
+const Configuracoes = dynamic(() => import("@/components/admin/Configuracoes"), { ssr: false });
 
 type AbaAtiva = "cesta" | "estoque" | "config";
 
@@ -185,27 +196,41 @@ export default function PaginaPrincipal() {
           demais em monitores ultra-wide). */}
       <main style={{ width: "80%", maxWidth: "1800px", margin: "0 auto", padding: `${spaceScaledXl} ${spaceScaledM}` }}>
         <SpaceBetween size="l">
+          {/* Cada <Profiler> aqui é um "nó" a mais na árvore de render que
+              o Grafana monta (painel "LCP — atraso de render por componente",
+              tabela perf_logs coluna `componente`) — o de ProfilerRaiz (id="app",
+              em app/layout.tsx) já mede a árvore inteira; estes medem só a
+              fatia deles, pra saber qual seção pesa mais no commit do React. */}
+
           {/* Espaço privilegiado: logo abaixo do header, antes de
               qualquer outra seção — é a primeira coisa que o cliente vê. */}
-          <CestaDaSemana />
+          <SecaoInstrumentada id="cesta-da-semana">
+            <CestaDaSemana />
+          </SecaoInstrumentada>
 
-          <Container>
-            <div style={{ display: "flex", alignItems: "flex-start", gap: spaceScaledS }}>
-              <span style={{ fontSize: fontSizeHeadingXl }}>🌿</span>
-              <div>
-                <Box variant="h1">Bem-vindo à COMUNA</Box>
-                <Box color="text-body-secondary">
-                  Somos uma cooperativa orgânica agroflorestal que conecta agricultores
-                  familiares e consumidores conscientes. Cada produto carrega o cuidado de
-                  quem planta com amor e respeito à terra. Mais do que uma feira, somos um
-                  projeto de vida — semeando alimento, saúde e comunidade.
-                </Box>
+          <SecaoInstrumentada id="hero-texto">
+            <Container>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: spaceScaledS }}>
+                <span style={{ fontSize: fontSizeHeadingXl }}>🌿</span>
+                <div>
+                  <Box variant="h1">Bem-vindo à COMUNA</Box>
+                  <Box color="text-body-secondary">
+                    Somos uma cooperativa orgânica agroflorestal que conecta agricultores
+                    familiares e consumidores conscientes. Cada produto carrega o cuidado de
+                    quem planta com amor e respeito à terra. Mais do que uma feira, somos um
+                    projeto de vida — semeando alimento, saúde e comunidade.
+                  </Box>
+                </div>
               </div>
-            </div>
-          </Container>
+            </Container>
+          </SecaoInstrumentada>
 
-          <ProdutosDestaque />
-          <ProdutosAvulsos />
+          <SecaoInstrumentada id="produtos-destaque">
+            <ProdutosDestaque />
+          </SecaoInstrumentada>
+          <SecaoInstrumentada id="produtos-avulsos">
+            <ProdutosAvulsos />
+          </SecaoInstrumentada>
         </SpaceBetween>
       </main>
 
