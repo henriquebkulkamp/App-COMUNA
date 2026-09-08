@@ -6,7 +6,8 @@
       "Bash(py --version)",
       "Bash(where python*)",
       "mcp__Claude_Preview__preview_start",
-      "PowerShell(Stop-Process -Id 12248 -Force)"
+      "PowerShell(Stop-Process -Id 12248 -Force)",
+      "WebSearch"
     ]
   },
   "sandbox": {

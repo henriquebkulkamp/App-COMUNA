@@ -1,8 +1,15 @@
 // ============================================================
-// IMAGEM SIMULADA — gera uma "foto" de produto determinística
-// (mesmo produto sempre gera a mesma imagem) sem depender de
-// nenhum serviço externo — é um SVG embutido como data URI,
-// então funciona offline e nunca quebra por fora do ar.
+// IMAGEM SIMULADA — retângulo sólido de uma cor por categoria,
+// sem depender de nenhum serviço externo — é um SVG embutido como
+// data URI, então funciona offline e nunca quebra por fora do ar.
+//
+// De propósito o mais simples possível: só `<rect>` preenchido,
+// sem texto/letra, sem fonte, sem cálculo de baseline. Como é uma
+// cor chapada, nem precisa das dimensões reais (400×300) — um SVG
+// de 1×1 escala sem nenhuma perda visual (é vetor, não bitmap) e o
+// `<img>` já estica via `object-fit: cover` (CartaoProduto.tsx).
+// Isso encolhe o data URI bastante e corta o custo de renderizar
+// texto (fonte + layout) do caminho crítico de pintura da imagem.
 //
 // A cor de fundo vem das paletas de gráfico do próprio Cloudscape
 // (@cloudscape-design/design-tokens) — uma por categoria — em vez
@@ -43,14 +50,8 @@ const COR_POR_CATEGORIA: Record<Categoria, string> = {
   "Mel e Apícolas": hexDoToken(colorChartsPaletteCategorical10),
 };
 
-export function gerarImagemSimulada(nome: string, categoria: Categoria): string {
+export function gerarImagemSimulada(categoria: Categoria): string {
   const cor = COR_POR_CATEGORIA[categoria] ?? "#8c8c94";
-  const letra = (nome.trim()[0] ?? "?").toUpperCase();
-  const svg =
-    `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300">` +
-    `<rect width="400" height="300" fill="${cor}"/>` +
-    `<text x="200" y="150" font-family="system-ui,sans-serif" font-size="140" ` +
-    `font-weight="bold" fill="rgba(255,255,255,0.85)" text-anchor="middle" ` +
-    `dominant-baseline="central">${letra}</text></svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"><rect width="1" height="1" fill="${cor}"/></svg>`;
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }

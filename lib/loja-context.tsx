@@ -23,6 +23,7 @@ import {
   useEffect,
   useState,
   useCallback,
+  useMemo,
   ReactNode,
 } from "react";
 import type { Produto, EstadoLoja, ConfigCestaSemana } from "./types";
@@ -250,11 +251,23 @@ export function LojaProvider({ children }: { children: ReactNode }) {
 
   // Getters computados — como fazer um filter() em Python
   // produtos_em_estoque = [p for p in produtos if p['em_estoque']]
-  const produtosEmEstoque = estado.produtos.filter(
-    (p) => p.emEstoque && p.categoria !== "Cestas"
+  //
+  // Memoizados por referência de `estado.produtos`: sem isso, cada
+  // render do Provider gerava um array novo, o que invalidava (e
+  // reconstruía) o índice de busca fuzzy do FlexSearch em
+  // SugestoesBusca.tsx a cada re-render — não só uma vez no mount.
+  const produtosEmEstoque = useMemo(
+    () => estado.produtos.filter((p) => p.emEstoque && p.categoria !== "Cestas"),
+    [estado.produtos]
   );
-  const itenscestaGrande = estado.produtos.filter((p) => p.naCestaGrande);
-  const itensCestaPequena = estado.produtos.filter((p) => p.naCestaPequena);
+  const itenscestaGrande = useMemo(
+    () => estado.produtos.filter((p) => p.naCestaGrande),
+    [estado.produtos]
+  );
+  const itensCestaPequena = useMemo(
+    () => estado.produtos.filter((p) => p.naCestaPequena),
+    [estado.produtos]
+  );
 
   return (
     <LojaContext.Provider

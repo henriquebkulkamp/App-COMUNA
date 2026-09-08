@@ -36,6 +36,8 @@ dotenv.config({ path: ".env.local" });
 // este script roda em Node puro (sem o bundler do Next), então não dá
 // pra importar um módulo .ts diretamente. A cor de fundo vem das
 // paletas de gráfico do próprio Cloudscape, uma por categoria.
+// Retângulo sólido, sem texto/letra — ver comentário completo em
+// lib/imagemSimulada.ts sobre por que 1×1 basta pra cor chapada.
 function hexDoToken(token) {
   return token.match(/#[0-9a-fA-F]{6}/)?.[0] ?? "#8c8c94";
 }
@@ -51,15 +53,9 @@ const COR_POR_CATEGORIA = {
   "Pães e Panificação": hexDoToken(colorChartsPaletteCategorical9),
   "Mel e Apícolas": hexDoToken(colorChartsPaletteCategorical10),
 };
-function gerarImagemSimulada(nome, categoria) {
+function gerarImagemSimulada(categoria) {
   const cor = COR_POR_CATEGORIA[categoria] ?? "#8c8c94";
-  const letra = (nome.trim()[0] ?? "?").toUpperCase();
-  const svg =
-    `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300">` +
-    `<rect width="400" height="300" fill="${cor}"/>` +
-    `<text x="200" y="150" font-family="system-ui,sans-serif" font-size="140" ` +
-    `font-weight="bold" fill="rgba(255,255,255,0.85)" text-anchor="middle" ` +
-    `dominant-baseline="central">${letra}</text></svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"><rect width="1" height="1" fill="${cor}"/></svg>`;
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 
@@ -172,7 +168,7 @@ async function main() {
           // O CSV não traz foto real — toda vez que a foto real chegar
           // (linha.imagemUrl preenchida), ela tem prioridade sobre a
           // simulada.
-          linha.imagemUrl?.trim() || gerarImagemSimulada(nome, categoria),
+          linha.imagemUrl?.trim() || gerarImagemSimulada(categoria),
         ]
       );
       inseridos++;

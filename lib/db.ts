@@ -196,7 +196,7 @@ export async function adicionarProdutoNaPlanilha(
       produto.unidade,
       produto.categoria,
       produto.descricao || null,
-      gerarImagemSimulada(produto.nome, produto.categoria),
+      gerarImagemSimulada(produto.categoria),
     ]
   );
 }
@@ -307,4 +307,37 @@ export async function salvarPedido(pedido: PedidoParaSalvar): Promise<string> {
   );
 
   return numeroPedido;
+}
+
+// ─── Gravação de Log de Performance ──────────────────────────
+// Alimenta a tabela que o Grafana lê (ver docker-compose.yml +
+// grafana/provisioning). Chamado por app/api/perf/route.ts.
+export interface LogDePerformanceParaSalvar {
+  tipo: "fcp" | "lcp" | "long-task" | "render";
+  valorMs: number;
+  rating?: string;
+  pagina?: string;
+  detalhes?: unknown;
+  /** 'real' (padrão) ou 'sintetico' (navegador automatizado — Lighthouse/etc). */
+  origem?: "real" | "sintetico";
+  /** `id` do <Profiler> do React — só em tipo='render' (ex: 'app', 'produtos-destaque'). */
+  componente?: string;
+}
+
+export async function salvarLogDePerformance(
+  log: LogDePerformanceParaSalvar
+): Promise<void> {
+  await obterPool().query(
+    `INSERT INTO perf_logs (tipo, valor_ms, rating, pagina, detalhes, origem, componente)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+    [
+      log.tipo,
+      log.valorMs,
+      log.rating ?? null,
+      log.pagina ?? null,
+      log.detalhes !== undefined ? JSON.stringify(log.detalhes) : null,
+      log.origem ?? "real",
+      log.componente ?? null,
+    ]
+  );
 }

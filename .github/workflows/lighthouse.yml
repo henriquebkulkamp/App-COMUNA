@@ -65,7 +65,10 @@ jobs:
       - name: Rodar Lighthouse CI
         uses: treosh/lighthouse-ci-action@v12
         with:
-          urls: |
-            http://localhost:3000/
+          # configPath, não inputs soltos: lighthouserc.js já define url,
+          # numberOfRuns (mediana de 5) e extraHeaders (marca os logs como
+          # 'sintetico' em perf_logs) — fonte única, mesma usada local via
+          # `npm run test:lighthouse`. A action não tem input `extraHeaders`
+          # próprio, por isso passar via arquivo de config.
+          configPath: ./lighthouserc.js
           uploadArtifacts: true
-          temporaryPublicStorage: true

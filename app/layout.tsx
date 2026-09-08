@@ -6,6 +6,8 @@ import "./globals.css";
 import { LojaProvider } from "@/lib/loja-context";
 import { CarrinhoProvider } from "@/lib/carrinho-context";
 import CloudscapeThemeInit from "@/components/shared/CloudscapeThemeInit";
+import ObservabilidadeDePerformance from "@/components/shared/ObservabilidadeDePerformance";
+import ProfilerRaiz from "@/components/shared/ProfilerRaiz";
 
 export const metadata: Metadata = {
   title: "COMUNA — Cooperativa Orgânica Agroflorestal",
@@ -29,11 +31,18 @@ export default function RootLayout({
     <html lang="pt-BR" suppressHydrationWarning>
       <body>
         <CloudscapeThemeInit />
-        {/* LojaProvider fornece o estado do estoque para todo o app */}
-        <LojaProvider>
-          {/* CarrinhoProvider fornece o estado do carrinho */}
-          <CarrinhoProvider>{children}</CarrinhoProvider>
-        </LojaProvider>
+        {/* Observabilidade de performance (FCP/LCP/long-tasks) — ver
+            lib/observabilidade.ts. Só console.log, não muda nada do app. */}
+        <ObservabilidadeDePerformance />
+        {/* ProfilerRaiz envolve tudo (inclusive os Providers) pra medir
+            o tempo de render/commit do React da árvore inteira. */}
+        <ProfilerRaiz>
+          {/* LojaProvider fornece o estado do estoque para todo o app */}
+          <LojaProvider>
+            {/* CarrinhoProvider fornece o estado do carrinho */}
+            <CarrinhoProvider>{children}</CarrinhoProvider>
+          </LojaProvider>
+        </ProfilerRaiz>
       </body>
     </html>
   );

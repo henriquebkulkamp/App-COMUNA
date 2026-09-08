@@ -1,0 +1,14 @@
+# ============================================================
+# Diz ao Grafana pra carregar sozinho qualquer .json desta pasta
+# como dashboard, na subida do container.
+# ============================================================
+apiVersion: 1
+
+providers:
+  - name: COMUNA
+    folder: ""
+    type: file
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards

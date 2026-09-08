@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import dynamic from "next/dynamic";
 import Container from "@cloudscape-design/components/container";
 import Header from "@cloudscape-design/components/header";
 import Input from "@cloudscape-design/components/input";
@@ -10,9 +11,14 @@ import SpaceBetween from "@cloudscape-design/components/space-between";
 import Spinner from "@cloudscape-design/components/spinner";
 import { spaceScaledXs, spaceScaledXxs, spaceScaledM } from "@cloudscape-design/design-tokens";
 import { useLoja } from "@/lib/loja-context";
-import SugestoesBusca from "./SugestoesBusca";
 import CartaoProduto from "./CartaoProduto";
 import type { Categoria, Produto } from "@/lib/types";
+
+// SugestoesBusca carrega o FlexSearch inteiro (~378KB minificado) só
+// pra alimentar o autocomplete — a maioria dos visitantes nunca digita
+// nada na busca. `ssr:false` porque é 100% interativo (não tem nada
+// pra renderizar no servidor: sem termo digitado, não mostra nada).
+const SugestoesBusca = dynamic(() => import("./SugestoesBusca"), { ssr: false });
 
 // Lista de categorias para o filtro — mesma ordem que aparece nos dados
 const CATEGORIAS: Categoria[] = [
@@ -87,11 +93,17 @@ export default function ProdutosAvulsos() {
             onChange={({ detail }) => setBusca(detail.value)}
             placeholder="Buscar produto..."
           />
-          <SugestoesBusca
-            produtos={produtosEmEstoque}
-            termo={busca}
-            onSelecionar={selecionarSugestao}
-          />
+          {/* Só monta o componente (e carrega o chunk do FlexSearch) quando
+              o cliente de fato começa a digitar — sem termo, SugestoesBusca
+              já não mostrava nada mesmo (sugestoes fica vazio), então isso
+              não muda o comportamento visível, só adia o custo. */}
+          {busca.trim() !== "" && (
+            <SugestoesBusca
+              produtos={produtosEmEstoque}
+              termo={busca}
+              onSelecionar={selecionarSugestao}
+            />
+          )}
         </div>
 
         {/* Filtros de categoria — scroll horizontal no mobile */}
