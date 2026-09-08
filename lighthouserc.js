@@ -5,11 +5,17 @@
 // tanto local (`npm run test:lighthouse`, com o servidor já de
 // pé em localhost:3000) quanto no CI (.github/workflows/lighthouse.yml).
 //
-// numberOfRuns: 5 — a própria documentação do Lighthouse recomenda
-// rodar várias vezes e olhar a MEDIANA, nunca uma rodada isolada:
-// o resultado varia com carga da máquina, mesmo com throttling
-// simulado. Foi exatamente essa variância que apareceu aqui: duas
-// rodadas seguidas do mesmo build deram Performance Score 65 e 42.
+// numberOfRuns: 1 — de propósito, não é o padrão recomendado pelo
+// Lighthouse (que pede várias rodadas + mediana). Aqui a primeira
+// rodada é sempre a mais lenta das 5 que a gente já rodou (61 vs.
+// 90/90/90/91): da 2ª em diante o V8 reaproveita bytecode já
+// compilado do mesmo JS (cache de compilação do Chrome), então o
+// TBT/LCP caem pela metade — mas isso só existe pra quem JÁ visitou a
+// página nessa mesma sessão do navegador. Pra loja, a maioria do
+// tráfego é visita nova (sem esse cache "quente"), então a 1ª rodada
+// é o cenário honesto — rodar mais e tirar mediana só dilui esse
+// número real com repetições que não representam a visita de verdade.
+
 //
 // throttlingMethod: "simulate" é o padrão do próprio Lighthouse —
 // calcula o throttling em cima do trace (determinístico), em vez
@@ -33,7 +39,7 @@ module.exports = {
       // "sintetico" de 20ms no mesmo segundo. Query string sobrevive às
       // duas, já que é a mesma URL sendo revisitada.
       url: ["http://localhost:3000/?perf_sintetico=1"],
-      numberOfRuns: 5,
+      numberOfRuns: 1,
       settings: {
         throttlingMethod: "simulate",
       },
