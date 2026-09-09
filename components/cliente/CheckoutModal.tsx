@@ -12,7 +12,6 @@ import Alert from "@cloudscape-design/components/alert";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import Container from "@cloudscape-design/components/container";
 import { useCarrinho } from "@/lib/carrinho-context";
-import { useLoja } from "@/lib/loja-context";
 import { WHATSAPP_NUMERO as WHATSAPP_NUMERO_PADRAO, ENDERECO_RETIRADA } from "@/lib/dados";
 import { formatarPreco, precoEfetivo } from "@/lib/formatadores";
 import Preco from "@/components/design-system/moleculas/Preco";
@@ -37,7 +36,6 @@ interface CheckoutModalProps {
 // ============================================================
 export default function CheckoutModal({ onFechar }: CheckoutModalProps) {
   const { itens, totalPreco, limpar } = useCarrinho();
-  const { atualizarQuantidade } = useLoja();
   const [dados, setDados] = useState<DadosCliente>({
     nome: "",
     celular: "",
@@ -108,10 +106,11 @@ export default function CheckoutModal({ onFechar }: CheckoutModalProps) {
       console.error("Falha ao gravar pedido:", erro);
     }
 
-    itens.forEach((item) => {
-      const novaQtd = Math.max(0, (item.produto.quantidade ?? 0) - item.quantidade);
-      atualizarQuantidade(item.produto.id, novaQtd);
-    });
+    // (O desconto de estoque de verdade já aconteceu no servidor, dentro
+    // de /api/pedidos — descontarEstoque() em lib/db.ts. Não tem mais
+    // update otimista de estoque aqui no cliente: a vitrine não lê mais
+    // de um estado client compartilhado, e sim de dados buscados no
+    // servidor a cada visita — ver app/page.tsx.)
 
     setSalvandoPedido(false);
 

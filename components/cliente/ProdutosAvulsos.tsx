@@ -8,9 +8,7 @@ import Input from "@cloudscape-design/components/input";
 import Button from "@cloudscape-design/components/button";
 import Box from "@cloudscape-design/components/box";
 import SpaceBetween from "@cloudscape-design/components/space-between";
-import Spinner from "@cloudscape-design/components/spinner";
 import { spaceScaledXs, spaceScaledXxs, spaceScaledM } from "@cloudscape-design/design-tokens";
-import { useLoja } from "@/lib/loja-context";
 import CartaoProduto from "./CartaoProduto";
 import type { Categoria, Produto } from "@/lib/types";
 
@@ -33,6 +31,10 @@ const CATEGORIAS: Categoria[] = [
   "Mel e Apícolas",
 ];
 
+interface ProdutosAvulsosProps {
+  produtosEmEstoque: Produto[];
+}
+
 // ============================================================
 // ProdutosAvulsos — Mostra apenas os produtos com emEstoque=true
 //
@@ -41,9 +43,13 @@ const CATEGORIAS: Categoria[] = [
 // Destaques — flex-wrap manual em vez do Cards do Cloudscape, porque
 // o Cards estica cada item pra preencher a coluna e o objetivo aqui
 // é justamente o oposto: todo card do mesmo tamanho, lado a lado.
+//
+// `produtosEmEstoque` vem por prop (buscado no servidor, ver
+// app/page.tsx) — sem useLoja() nem fetch no cliente, então não tem
+// mais estado de "carregando": os produtos já chegam prontos no HTML.
+// Só a busca/filtro (interação de fato) continua em estado local.
 // ============================================================
-export default function ProdutosAvulsos() {
-  const { produtosEmEstoque, carregandoProdutos } = useLoja();
+export default function ProdutosAvulsos({ produtosEmEstoque }: ProdutosAvulsosProps) {
   const [categoriaAtiva, setCategoriaAtiva] = useState<Categoria | "Todos">("Todos");
   const [busca, setBusca] = useState("");
 
@@ -137,14 +143,7 @@ export default function ProdutosAvulsos() {
           </div>
         )}
 
-        {carregandoProdutos ? (
-          <Box textAlign="center" padding="l">
-            <Spinner size="large" />
-            <Box padding={{ top: "s" }} color="text-body-secondary">
-              Carregando produtos da COMUNA...
-            </Box>
-          </Box>
-        ) : produtosFiltrados.length === 0 ? (
+        {produtosFiltrados.length === 0 ? (
           <Box textAlign="center" color="text-body-secondary" padding="l">
             {produtosEmEstoque.length === 0 ? (
               <>

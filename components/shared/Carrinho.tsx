@@ -4,6 +4,7 @@ import { useState } from "react";
 import Box from "@cloudscape-design/components/box";
 import Button from "@cloudscape-design/components/button";
 import Alert from "@cloudscape-design/components/alert";
+import Container from "@cloudscape-design/components/container";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import {
   colorBorderDividerDefault,
@@ -16,16 +17,21 @@ import CheckoutModal from "@/components/cliente/CheckoutModal";
 import Preco from "@/components/design-system/moleculas/Preco";
 
 // ============================================================
-// Carrinho — só o conteúdo, sem moldura/header próprios: quem chama
-// (o Modal aberto pelo ícone 🛒 do Header, ver app/page.tsx) já
-// fornece o título e a moldura.
+// Carrinho — vive na própria página (/carrinho, ver
+// app/carrinho/page.tsx), então traz seu próprio título e moldura
+// (Container + Box variant="h1"). Antes vivia dentro do Modal aberto
+// pelo ícone 🛒 do Header, que fornecia título e moldura de fora.
 // ============================================================
 export default function Carrinho() {
-  const { itens, totalPreco, aumentar, diminuir, remover } = useCarrinho();
+  const { itens, totalItens, totalPreco, aumentar, diminuir, remover } = useCarrinho();
   const [checkoutAberto, setCheckoutAberto] = useState(false);
 
   return (
-    <>
+    <Container>
+      <Box variant="h1" padding={{ bottom: "m" }}>
+        🛒 Seu Carrinho{totalItens > 0 ? ` (${totalItens})` : ""}
+      </Box>
+
       {itens.length === 0 ? (
         <Box textAlign="center" color="text-body-secondary" padding="l">
           <Box fontSize="display-l">🌱</Box>
@@ -111,6 +117,6 @@ export default function Carrinho() {
 
       {/* Modal de checkout (abre quando clicar em finalizar) */}
       {checkoutAberto && <CheckoutModal onFechar={() => setCheckoutAberto(false)} />}
-    </>
+    </Container>
   );
 }

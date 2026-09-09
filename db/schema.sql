@@ -85,45 +85,14 @@ CREATE TABLE IF NOT EXISTS solicitacoes (
 );
 
 -- ============================================================
--- PERF_LOGS — histórico de métricas de performance (Web Vitals e
--- long tasks) enviadas pelo browser de quem visita o site.
--- Gravado por app/api/perf/route.ts, lido pelo Grafana (ver
--- docker-compose.yml + grafana/provisioning).
+-- PERF_LOGS — removida. Guardava métricas de performance (Web
+-- Vitals/long tasks) só pra alimentar um dashboard do Grafana que
+-- nunca chegou a ser usado (ver docker-compose.yml e lib/observabilidade.ts,
+-- ambos removidos junto). DROP explícito aqui porque este schema.sql
+-- roda de novo a cada `npm run db:migrate`/`db:setup` — limpa também
+-- quem já tinha essa tabela numa base local.
 -- ============================================================
-CREATE TABLE IF NOT EXISTS perf_logs (
-  id         BIGSERIAL PRIMARY KEY,
-  criado_em  TIMESTAMPTZ NOT NULL DEFAULT now(),
-  tipo       TEXT NOT NULL CHECK (tipo IN ('fcp', 'lcp', 'long-task', 'render')),
-  valor_ms   NUMERIC(10, 2) NOT NULL,
-  -- 'good' | 'needs-improvement' | 'poor' — só preenchido em fcp/lcp.
-  rating     TEXT,
-  -- pathname de onde veio a métrica (ex: '/cliente').
-  pagina     TEXT,
-  -- attribution do web-vitals (fcp/lcp) ou dados extras da long task/render.
-  detalhes   JSONB,
-  -- 'real' = visita de verdade; 'sintetico' = navegador automatizado
-  -- (Lighthouse/Puppeteer/Selenium — detectado via navigator.webdriver).
-  -- Existe pra não misturar teste sintético com uso real no mesmo
-  -- gráfico (ver painéis do Grafana em grafana/provisioning/dashboards).
-  origem     TEXT NOT NULL DEFAULT 'real' CHECK (origem IN ('real', 'sintetico')),
-  -- Nome da seção que gerou a linha (só em tipo='render') — ex: 'app'
-  -- (raiz, árvore inteira), 'produtos-destaque', 'produtos-avulsos'.
-  -- `valor_ms` aqui é tempo desde a navegação até essa seção montar
-  -- (User Timing API — ver useMarcarMontagem em lib/observabilidade.ts),
-  -- não duração de render do React (o <Profiler> não funciona em
-  -- produção neste projeto — ver comentário em onRenderRaiz).
-  componente TEXT
-);
-CREATE INDEX IF NOT EXISTS idx_perf_logs_criado_em ON perf_logs (criado_em DESC);
-CREATE INDEX IF NOT EXISTS idx_perf_logs_tipo ON perf_logs (tipo);
-
--- Idempotente: garante a coluna em bancos criados antes dela existir.
-ALTER TABLE perf_logs ADD COLUMN IF NOT EXISTS origem TEXT NOT NULL DEFAULT 'real';
-ALTER TABLE perf_logs ADD COLUMN IF NOT EXISTS componente TEXT;
--- A CHECK de `tipo` acima só vale pra tabela nova — bancos que já existiam
--- antes de 'render' virar um tipo válido precisam da constraint recriada.
-ALTER TABLE perf_logs DROP CONSTRAINT IF EXISTS perf_logs_tipo_check;
-ALTER TABLE perf_logs ADD CONSTRAINT perf_logs_tipo_check CHECK (tipo IN ('fcp', 'lcp', 'long-task', 'render'));
+DROP TABLE IF EXISTS perf_logs;
 
 -- Mantém atualizado_em em dia a cada UPDATE em produtos
 CREATE OR REPLACE FUNCTION set_atualizado_em()

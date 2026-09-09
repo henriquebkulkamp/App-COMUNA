@@ -30,15 +30,7 @@
 module.exports = {
   ci: {
     collect: {
-      // ?perf_sintetico=1 é o que lib/observabilidade.ts lê pra marcar
-      // origem='sintetico'. Não dá pra usar header custom (extraHeaders)
-      // pra isso: cada rodada do Lighthouse faz DUAS navegações internas
-      // (uma medição completa + um replay quase instantâneo pra métricas
-      // adicionais), e na prática só a segunda carrega com o header —
-      // confirmado rodando e vendo LCP "real" de 7.5s junto de LCP
-      // "sintetico" de 20ms no mesmo segundo. Query string sobrevive às
-      // duas, já que é a mesma URL sendo revisitada.
-      url: ["http://localhost:3000/?perf_sintetico=1"],
+      url: ["http://localhost:3000/"],
       numberOfRuns: 1,
       settings: {
         throttlingMethod: "simulate",

@@ -17,29 +17,5 @@ services:
       timeout: 5s
       retries: 10
 
-  # Grafana lendo direto do mesmo Postgres (tabela perf_logs) — ver
-  # lib/observabilidade.ts (quem grava) e grafana/provisioning (como
-  # o datasource e o dashboard são criados sozinhos, sem clique manual).
-  grafana:
-    image: grafana/grafana-oss:11.3.1
-    container_name: comuna-grafana
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      POSTGRES_HOST: postgres
-      POSTGRES_USER: ${POSTGRES_USER:-comuna}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env.local}
-      POSTGRES_DB: ${POSTGRES_DB:-comuna}
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
-      GF_AUTH_ANONYMOUS_ENABLED: "false"
-    ports:
-      - "${GRAFANA_PORT:-3001}:3000"
-    volumes:
-      - comuna_grafanadata:/var/lib/grafana
-      - ./grafana/provisioning:/etc/grafana/provisioning:ro
-
 volumes:
   comuna_pgdata:
-  comuna_grafanadata:

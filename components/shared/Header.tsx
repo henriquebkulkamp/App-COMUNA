@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Button from "@cloudscape-design/components/button";
 import Box from "@cloudscape-design/components/box";
 import {
@@ -24,9 +25,6 @@ interface HeaderProps {
   mostrarCarrinho?: boolean;
   titulo?: string;
   onAdminClick?: () => void;
-  /** Chamado ao clicar no ícone do carrinho — quem chama decide o que
-   *  fazer (abrir o painel do carrinho, ver app/page.tsx). */
-  onCarrinhoClick?: () => void;
 }
 
 // ============================================================
@@ -43,9 +41,9 @@ export default function Header({
   mostrarCarrinho = true,
   titulo,
   onAdminClick,
-  onCarrinhoClick,
 }: HeaderProps) {
   const { totalItens } = useCarrinho();
+  const router = useRouter();
 
   return (
     <header
@@ -119,10 +117,21 @@ export default function Header({
             </Button>
           )}
 
-          {/* Ícone do carrinho */}
+          {/* Ícone do carrinho — href pra ser um link de verdade
+              (funciona com "abrir em nova aba", Ctrl+clique etc.) e
+              onFollow pra navegar pelo router do Next em vez de dar
+              reload completo da página, igual o Link do logo acima. */}
           {mostrarCarrinho && (
             <span style={{ position: "relative", display: "inline-block" }}>
-              <Button onClick={onCarrinhoClick} variant="normal" ariaLabel="Ver carrinho">
+              <Button
+                href="/carrinho"
+                onFollow={(e) => {
+                  e.preventDefault();
+                  router.push("/carrinho");
+                }}
+                variant="normal"
+                ariaLabel="Ver carrinho"
+              >
                 🛒
               </Button>
               {totalItens > 0 && (

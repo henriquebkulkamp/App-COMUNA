@@ -12,7 +12,6 @@ import {
   spaceScaledXl,
   spaceScaledXxl,
 } from "@cloudscape-design/design-tokens";
-import { useLoja } from "@/lib/loja-context";
 import { useCarrinho } from "@/lib/carrinho-context";
 import Preco from "@/components/design-system/moleculas/Preco";
 import type { Produto } from "@/lib/types";
@@ -108,14 +107,26 @@ function CartaoCesta({ titulo, produto, itens }: CartaoCestaProps) {
 // mesma de qualquer outra seção — e usa `fitHeight` do Container pra
 // esticar o conteúdo até preencher esse espaço de verdade (com scroll
 // interno se, por acaso, sobrar mais itens do que cabem).
+//
+// Dados vêm por prop (buscados no servidor, ver app/page.tsx) em vez
+// de useLoja() — essa seção não muda entre requisições, só quando a
+// Elizete mexe na cesta, então não precisa de estado de cliente pra
+// exibir, só pro botão "Quero a Cesta" (esse sim usa useCarrinho()).
 // ============================================================
-export default function CestaDaSemana() {
-  const { itenscestaGrande, itensCestaPequena, estado } = useLoja();
+interface CestaDaSemanaProps {
+  itensCestaGrande: Produto[];
+  itensCestaPequena: Produto[];
+  cestaGrande?: Produto;
+  cestaPequena?: Produto;
+}
 
-  const cestaGrande = estado.produtos.find((p) => p.id === "cesta-grande")!;
-  const cestaPequena = estado.produtos.find((p) => p.id === "cesta-pequena")!;
-
-  const temCestaGrande = itenscestaGrande.length > 0;
+export default function CestaDaSemana({
+  itensCestaGrande,
+  itensCestaPequena,
+  cestaGrande,
+  cestaPequena,
+}: CestaDaSemanaProps) {
+  const temCestaGrande = itensCestaGrande.length > 0;
   const temCestaPequena = itensCestaPequena.length > 0;
 
   // Sem borda/sombra: o fundo da página já contrasta com o branco do
@@ -172,12 +183,12 @@ export default function CestaDaSemana() {
             lado a lado — mesma ideia responsiva que o ColumnLayout
             tinha, só que feita à mão. */}
         <div style={{ height: "100%", display: "flex", flexWrap: "wrap", gap: spaceScaledL }}>
-          {temCestaGrande && (
+          {temCestaGrande && cestaGrande && (
             <div style={{ flex: "1 1 280px", minWidth: 0 }}>
-              <CartaoCesta titulo="Cesta Grande" produto={cestaGrande} itens={itenscestaGrande} />
+              <CartaoCesta titulo="Cesta Grande" produto={cestaGrande} itens={itensCestaGrande} />
             </div>
           )}
-          {temCestaPequena && (
+          {temCestaPequena && cestaPequena && (
             <div style={{ flex: "1 1 280px", minWidth: 0 }}>
               <CartaoCesta titulo="Cesta Pequena" produto={cestaPequena} itens={itensCestaPequena} />
             </div>

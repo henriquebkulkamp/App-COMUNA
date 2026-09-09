@@ -2,12 +2,15 @@ import type { Metadata } from "next";
 // O CSS base do Cloudscape precisa carregar antes de qualquer CSS
 // específico de componente — por isso vem primeiro que o globals.css.
 import "@cloudscape-design/global-styles/index.css";
+// Tema de marca (verde) — CSS gerado, ver o cabeçalho do arquivo pra
+// como regerar. Carrega no <head> antes de qualquer paint (diferente
+// de aplicar via JS num useEffect), então a página já nasce verde —
+// sem o flash de azul-padrão-do-Cloudscape virando verde depois que
+// o React hidrata.
+import "./tema-marca.generated.css";
 import "./globals.css";
-import { LojaProvider } from "@/lib/loja-context";
 import { CarrinhoProvider } from "@/lib/carrinho-context";
 import CloudscapeThemeInit from "@/components/shared/CloudscapeThemeInit";
-import ObservabilidadeDePerformance from "@/components/shared/ObservabilidadeDePerformance";
-import ProfilerRaiz from "@/components/shared/ProfilerRaiz";
 
 export const metadata: Metadata = {
   title: "COMUNA — Cooperativa Orgânica Agroflorestal",
@@ -31,18 +34,12 @@ export default function RootLayout({
     <html lang="pt-BR" suppressHydrationWarning>
       <body>
         <CloudscapeThemeInit />
-        {/* Observabilidade de performance (FCP/LCP/long-tasks) — ver
-            lib/observabilidade.ts. Só console.log, não muda nada do app. */}
-        <ObservabilidadeDePerformance />
-        {/* ProfilerRaiz envolve tudo (inclusive os Providers) pra medir
-            o tempo de render/commit do React da árvore inteira. */}
-        <ProfilerRaiz>
-          {/* LojaProvider fornece o estado do estoque para todo o app */}
-          <LojaProvider>
-            {/* CarrinhoProvider fornece o estado do carrinho */}
-            <CarrinhoProvider>{children}</CarrinhoProvider>
-          </LojaProvider>
-        </ProfilerRaiz>
+        {/* LojaProvider não mora mais aqui — a vitrine pública busca os
+            produtos no servidor (ver app/page.tsx); só o painel admin
+            precisa dele agora, e fica escopado lá dentro
+            (components/admin/PainelAdmin.tsx). */}
+        {/* CarrinhoProvider fornece o estado do carrinho pra todo o app */}
+        <CarrinhoProvider>{children}</CarrinhoProvider>
       </body>
     </html>
   );
