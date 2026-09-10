@@ -15,8 +15,8 @@ import { apiFetch } from "@/lib/api";
 // que recebe as mensagens de pedido.
 //
 // O PIN único que existia aqui foi substituído por login por conta
-// (email + senha, ver PortaoAdmin.tsx) — trocar a senha da conta
-// admin ainda não tem tela própria, então por ora só o campo do
+// (email + senha, ver src/pages/PaginaLogin.tsx) — trocar a senha da
+// conta admin ainda não tem tela própria, então por ora só o campo do
 // WhatsApp fica aqui.
 // ============================================================
 export default function Configuracoes() {

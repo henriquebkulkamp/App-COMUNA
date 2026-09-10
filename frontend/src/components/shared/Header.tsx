@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Button from "@cloudscape-design/components/button";
 import Box from "@cloudscape-design/components/box";
 import {
@@ -16,13 +16,24 @@ import {
   spaceScaledL,
 } from "@cloudscape-design/design-tokens";
 import { useCarrinho } from "@/lib/carrinho-context";
+import { TOKEN_STORAGE_KEY } from "@/lib/api";
 import Icone from "@/icons/Icone";
 import IconeSvgCarrinho from "@/icons/IconeSvgCarrinho";
 
 interface HeaderProps {
   mostrarCarrinho?: boolean;
   titulo?: string;
-  onAdminClick?: () => void;
+  /** false só dentro do próprio painel admin (PainelAdmin.tsx) — não
+   *  faz sentido mostrar "Área da COMUNA" pra quem já tá logado ali. */
+  mostrarAreaAdmin?: boolean;
+}
+
+function estaAutenticado(): boolean {
+  try {
+    return Boolean(localStorage.getItem(TOKEN_STORAGE_KEY));
+  } catch {
+    return false;
+  }
 }
 
 // ============================================================
@@ -38,10 +49,22 @@ interface HeaderProps {
 export default function Header({
   mostrarCarrinho = true,
   titulo,
-  onAdminClick,
+  mostrarAreaAdmin = true,
 }: HeaderProps) {
   const { totalItens } = useCarrinho();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Já logado? manda direto pro painel — não faz sentido passar pela
+  // tela de login de novo. Senão, manda pro login guardando esta
+  // página como "de onde veio" (ver PaginaLogin.tsx).
+  function handleAreaAdmin() {
+    if (estaAutenticado()) {
+      navigate("/admin");
+    } else {
+      navigate("/login", { state: { from: { pathname: location.pathname, search: location.search } } });
+    }
+  }
 
   return (
     <header
@@ -109,8 +132,8 @@ export default function Header({
 
         <div style={{ display: "flex", alignItems: "center", gap: spaceScaledXs }}>
           {/* Botão de acesso admin */}
-          {onAdminClick && (
-            <Button onClick={onAdminClick} variant="normal" ariaLabel="Área administrativa">
+          {mostrarAreaAdmin && (
+            <Button onClick={handleAreaAdmin} variant="normal" ariaLabel="Área administrativa">
               Área da COMUNA
             </Button>
           )}

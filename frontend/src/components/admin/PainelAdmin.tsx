@@ -27,14 +27,15 @@ const Configuracoes = lazy(() => import("@/components/admin/Configuracoes"));
 type AbaAtiva = "cesta" | "estoque" | "config";
 
 interface PainelAdminProps {
-  /** Chamado ao clicar em "Sair" — quem chama decide o que fazer com
-   *  o estado de autenticação (ver components/cliente/PortaoAdmin.tsx). */
+  /** Chamado depois de limpar o token de sessão (ver `sair()` abaixo) —
+   *  quem chama decide pra onde navegar (ver src/pages/PaginaAdmin.tsx). */
   onSair: () => void;
 }
 
 // ============================================================
-// PainelAdmin — área da Elizete. Só existe depois do login (ver
-// PortaoAdmin.tsx). LojaProvider fica escopado aqui
+// PainelAdmin — área da Elizete. Rota protegida /admin (ver
+// src/pages/PaginaAdmin.tsx e PaginaLogin.tsx pro fluxo de login).
+// LojaProvider fica escopado aqui
 // dentro (não mais em app/layout.tsx): é o único lugar que precisa de
 // estado client com updates otimistas pra editar estoque/preço/cesta —
 // a vitrine pública não depende mais dele (busca os produtos direto do
@@ -51,7 +52,7 @@ export default function PainelAdmin({ onSair }: PainelAdminProps) {
   return (
     <LojaProvider>
       <div style={{ minHeight: "100vh", backgroundColor: colorBackgroundLayoutMain }}>
-        <Header mostrarCarrinho={false} titulo="Painel Admin" />
+        <Header mostrarCarrinho={false} mostrarAreaAdmin={false} titulo="Painel Admin" />
 
         <main style={{ maxWidth: "48rem", margin: "0 auto", padding: `${spaceScaledXl} ${spaceScaledM}` }}>
           <SpaceBetween size="l">

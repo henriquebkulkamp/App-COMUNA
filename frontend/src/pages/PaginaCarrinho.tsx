@@ -5,9 +5,8 @@ import { spaceScaledM, spaceScaledXl, spaceScaledXs } from "@cloudscape-design/d
 import Header from "@/components/shared/Header";
 import Carrinho from "@/components/shared/Carrinho";
 
-// Mesmo tom de fundo usado na página do cliente (ver PortaoAdmin.tsx,
-// que é quem de fato define esse valor) — ver o comentário lá pra
-// como esse valor foi escolhido.
+// Mesmo tom de fundo usado nas outras páginas do cliente (ver
+// PaginaPrincipal.tsx, que replica o mesmo valor).
 const FUNDO_PAGINA = "#f0f0e8";
 
 export default function PaginaCarrinho() {

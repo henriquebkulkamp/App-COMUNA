@@ -4,12 +4,16 @@ import Box from "@cloudscape-design/components/box";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { spaceScaledS, spaceScaledM, spaceScaledXl } from "@cloudscape-design/design-tokens";
 import { apiFetch } from "@/lib/api";
-import PortaoAdmin from "@/components/cliente/PortaoAdmin";
+import Header from "@/components/shared/Header";
 import CestaDaSemana from "@/components/cliente/CestaDaSemana";
 import ProdutosDestaque from "@/components/cliente/ProdutosDestaque";
 import ProdutosAvulsos from "@/components/cliente/ProdutosAvulsos";
 import Icone from "@/icons/Icone";
 import type { Produto } from "@/lib/types";
+
+// Mesmo tom de fundo usado em todas as páginas do cliente (ver
+// PaginaCarrinho.tsx, que replica o mesmo valor).
+const FUNDO_PAGINA = "#f0f0e8";
 
 // ============================================================
 // PaginaPrincipal — na versão Next.js, esta página era um Server
@@ -22,9 +26,10 @@ import type { Produto } from "@/lib/types";
 // não um bug: sem servidor de app, não existe onde buscar antes do
 // primeiro paint.
 //
-// Quem decide se mostra essa vitrine ou o painel admin é o
-// PortaoAdmin — é o único pedaço que precisa saber (via localStorage,
-// que só existe no navegador) se quem está vendo é a Elizete.
+// O acesso da Elizete não vive mais aqui dentro (era o PortaoAdmin,
+// removido) — "Área da COMUNA" no Header agora manda pra /login, uma
+// rota de verdade, e o painel vive em /admin (ver App.tsx). Esta
+// página só mostra a vitrine, sempre.
 // ============================================================
 export default function PaginaPrincipal() {
   const [produtos, setProdutos] = useState<Produto[] | null>(null);
@@ -53,9 +58,12 @@ export default function PaginaPrincipal() {
 
   if (produtos === null) {
     return (
-      <Box textAlign="center" padding="xxl" color="text-body-secondary">
-        {erro ? "Não foi possível carregar os produtos. Tente novamente." : "Carregando..."}
-      </Box>
+      <div style={{ minHeight: "100vh", backgroundColor: FUNDO_PAGINA }}>
+        <Header />
+        <Box textAlign="center" padding="xxl" color="text-body-secondary">
+          {erro ? "Não foi possível carregar os produtos. Tente novamente." : "Carregando..."}
+        </Box>
+      </div>
     );
   }
 
@@ -66,7 +74,9 @@ export default function PaginaPrincipal() {
   const cestaPequena = produtos.find((p) => p.id === "cesta-pequena");
 
   return (
-    <PortaoAdmin>
+    <div style={{ minHeight: "100vh", backgroundColor: FUNDO_PAGINA }}>
+      <Header />
+
       {/* Sem coluna reservada pro carrinho — o conteúdo ocupa a maior
           parte da largura da tela (~80%, com um teto pra não esticar
           demais em monitores ultra-wide). */}
@@ -108,6 +118,6 @@ export default function PaginaPrincipal() {
         <p>COMUNA — Cooperativa Orgânica Agroflorestal</p>
         <p>Semeando amor e vida!</p>
       </Box>
-    </PortaoAdmin>
+    </div>
   );
 }
