@@ -2,8 +2,11 @@
 // lighthouserc.js — configuração do Lighthouse CI (LHCI)
 //
 // Fonte única de verdade pros parâmetros de auditoria — usada
-// tanto local (`npm run test:lighthouse`, com o servidor já de
-// pé em localhost:3000) quanto no CI (.github/workflows/lighthouse.yml).
+// tanto local (com o frontend/ já de pé via `npm run preview --prefix
+// frontend`, na porta 5173) quanto no CI (.github/workflows/lighthouse.yml).
+//
+// Aponta pro frontend/ (Vite), não mais pro Next.js na porta 3000 —
+// desde a migração pra backend/ + frontend/, é ele quem serve a página.
 //
 // numberOfRuns: 1 — de propósito, não é o padrão recomendado pelo
 // Lighthouse (que pede várias rodadas + mediana). Aqui a primeira
@@ -30,7 +33,7 @@
 module.exports = {
   ci: {
     collect: {
-      url: ["http://localhost:3000/"],
+      url: ["http://localhost:5173/"],
       numberOfRuns: 1,
       settings: {
         throttlingMethod: "simulate",
