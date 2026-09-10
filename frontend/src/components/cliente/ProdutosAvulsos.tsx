@@ -7,6 +7,7 @@ import Box from "@cloudscape-design/components/box";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { spaceScaledXs, spaceScaledXxs, spaceScaledM } from "@cloudscape-design/design-tokens";
 import CartaoProduto from "./CartaoProduto";
+import Icone from "@/icons/Icone";
 import type { Categoria, Produto } from "@/lib/types";
 
 // SugestoesBusca carrega o FlexSearch inteiro (~378KB minificado) só
@@ -84,7 +85,9 @@ export default function ProdutosAvulsos({ produtosEmEstoque }: ProdutosAvulsosPr
             produtosEmEstoque.length === 1 ? "produto disponível" : "produtos disponíveis"
           }
         >
-          🛒 Produtos Avulsos
+          <SpaceBetween direction="horizontal" size="xs" alignItems="center">
+            <Icone nome="carrinho" /> Produtos Avulsos
+          </SpaceBetween>
         </Header>
       }
     >
@@ -147,7 +150,9 @@ export default function ProdutosAvulsos({ produtosEmEstoque }: ProdutosAvulsosPr
           <Box textAlign="center" color="text-body-secondary" padding="l">
             {produtosEmEstoque.length === 0 ? (
               <>
-                <Box fontSize="display-l">📦</Box>
+                <Box padding={{ bottom: "xs" }}>
+                  <Icone nome="caixa" tamanho={40} />
+                </Box>
                 Nenhum produto disponível no momento.
                 <br />
                 Volte na sexta-feira quando a loja abre!

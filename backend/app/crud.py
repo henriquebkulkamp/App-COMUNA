@@ -1,18 +1,21 @@
 # ============================================================
 # CRUD — operações de escrita, espelha as funções de mutação de
 # lib/db.ts (atualizarXNaPlanilha, salvarPedido, salvarSolicitacoes,
-# descontarEstoque, verificarPin). Leituras cacheadas ficam em cache.py.
+# descontarEstoque). Leituras cacheadas ficam em cache.py.
+#
+# autenticar_admin() substitui o antigo verificarPin — login por conta
+# (email+senha), não mais PIN único (ver app/auth.py).
 # ============================================================
 
 import time
 
-from sqlalchemy import update
+from sqlalchemy import select, update
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from sqlalchemy.dialects.postgresql import insert as pg_insert
-
-from .cache import buscar_configuracoes_cache, invalidar_cache_configuracoes
-from .models import Configuracao, Pedido, Produto, Solicitacao
+from .auth import gerar_token, verificar_senha
+from .cache import invalidar_cache_configuracoes
+from .models import Admin, Configuracao, Pedido, Produto, Solicitacao
 
 
 class ProdutoNaoEncontrado(Exception):
@@ -104,9 +107,16 @@ async def remover_produto(session: AsyncSession, produto_id: str) -> None:
     await session.commit()
 
 
-async def verificar_pin(session: AsyncSession, pin_digitado: str) -> bool:
-    config = await buscar_configuracoes_cache(session)
-    return config.get("pin") == pin_digitado
+async def autenticar_admin(session: AsyncSession, email: str, senha: str) -> str | None:
+    """Verifica email+senha contra a tabela `admins` e, se bater, retorna
+    um token de sessão assinado (ver app/auth.py). None em qualquer
+    falha (email não existe ou senha errada) — a rota não distingue os
+    dois casos na resposta, pra não revelar quais emails têm conta."""
+    resultado = await session.execute(select(Admin).where(Admin.email == email))
+    admin = resultado.scalar_one_or_none()
+    if admin is None or not verificar_senha(senha, admin.senha_hash):
+        return None
+    return gerar_token(admin.id)
 
 
 async def atualizar_configuracao(session: AsyncSession, chave: str, novo_valor: str) -> None:

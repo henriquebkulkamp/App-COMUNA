@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import Container from "@cloudscape-design/components/container";
 import Box from "@cloudscape-design/components/box";
 import SpaceBetween from "@cloudscape-design/components/space-between";
-import { spaceScaledS, spaceScaledM, spaceScaledXl, fontSizeHeadingXl } from "@cloudscape-design/design-tokens";
+import { spaceScaledS, spaceScaledM, spaceScaledXl } from "@cloudscape-design/design-tokens";
 import { apiFetch } from "@/lib/api";
 import PortaoAdmin from "@/components/cliente/PortaoAdmin";
 import CestaDaSemana from "@/components/cliente/CestaDaSemana";
 import ProdutosDestaque from "@/components/cliente/ProdutosDestaque";
 import ProdutosAvulsos from "@/components/cliente/ProdutosAvulsos";
+import Icone from "@/icons/Icone";
 import type { Produto } from "@/lib/types";
 
 // ============================================================
@@ -82,7 +83,7 @@ export default function PaginaPrincipal() {
 
           <Container>
             <div style={{ display: "flex", alignItems: "flex-start", gap: spaceScaledS }}>
-              <span style={{ fontSize: fontSizeHeadingXl }}>🌿</span>
+              <Icone nome="folha" tamanho={28} />
               <div>
                 <Box variant="h1">Bem-vindo à COMUNA</Box>
                 <Box color="text-body-secondary">
@@ -101,7 +102,10 @@ export default function PaginaPrincipal() {
       </main>
 
       <Box textAlign="center" color="text-body-secondary" padding={{ vertical: "l" }}>
-        <p>🌱 COMUNA — Cooperativa Orgânica Agroflorestal</p>
+        <Box padding={{ bottom: "xs" }}>
+          <Icone nome="muda" tamanho={24} />
+        </Box>
+        <p>COMUNA — Cooperativa Orgânica Agroflorestal</p>
         <p>Semeando amor e vida!</p>
       </Box>
     </PortaoAdmin>

@@ -1,13 +1,14 @@
 import { useState, useEffect, type ReactNode } from "react";
 import Box from "@cloudscape-design/components/box";
 import Button from "@cloudscape-design/components/button";
+import Icon from "@cloudscape-design/components/icon";
 import Modal from "@cloudscape-design/components/modal";
 import FormField from "@cloudscape-design/components/form-field";
 import Input from "@cloudscape-design/components/input";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import Header from "@/components/shared/Header";
 import PainelAdmin from "@/components/admin/PainelAdmin";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, TOKEN_STORAGE_KEY } from "@/lib/api";
 
 // Fundo da página com um amarelo bem sutil — os Containers continuam
 // brancos por cima, sem degradê, uma cor sólida de cada lado.
@@ -29,52 +30,59 @@ interface PortaoAdminProps {
 // ============================================================
 // PortaoAdmin — única parte da página que precisa saber se quem está
 // vendo é a Elizete (admin) ou um cliente qualquer. Essa distinção só
-// existe no navegador (depende de localStorage).
+// existe no navegador (depende de haver um token salvo em localStorage).
+//
+// Login por conta (email + senha), não mais PIN único — POST
+// /api/admin/login retorna um token de sessão (ver backend/app/auth.py)
+// que fica guardado aqui e é reenviado em toda chamada admin daqui pra
+// frente (ver src/lib/api.ts).
 // ============================================================
 export default function PortaoAdmin({ children }: PortaoAdminProps) {
   const [mostrarLoginAdmin, setMostrarLoginAdmin] = useState(false);
-  const [pinDigitado, setPinDigitado] = useState("");
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
   const [autenticado, setAutenticado] = useState(false);
-  const [verificandoPin, setVerificandoPin] = useState(false);
-  const [erroPin, setErroPin] = useState(false);
+  const [entrando, setEntrando] = useState(false);
+  const [erroLogin, setErroLogin] = useState("");
 
   useEffect(() => {
-    if (localStorage.getItem("comuna_admin_auth") === "1") setAutenticado(true);
+    if (localStorage.getItem(TOKEN_STORAGE_KEY)) setAutenticado(true);
   }, []);
 
-  // Verifica o PIN no servidor — o valor correto nunca fica no código do cliente.
-  async function verificarPin(e: React.FormEvent) {
+  async function fazerLogin(e: React.FormEvent) {
     e.preventDefault();
-    setVerificandoPin(true);
-    setErroPin(false);
+    setEntrando(true);
+    setErroLogin("");
     try {
-      const res = await apiFetch("/api/admin/verificar-pin", {
+      const res = await apiFetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pin: pinDigitado }),
+        body: JSON.stringify({ email, senha }),
       });
       const dados = await res.json();
-      if (dados.valido) {
-        localStorage.setItem("comuna_admin_auth", "1");
+      if (res.ok && dados.sucesso) {
+        localStorage.setItem(TOKEN_STORAGE_KEY, dados.token);
         setAutenticado(true);
         setMostrarLoginAdmin(false);
-        setPinDigitado("");
+        setEmail("");
+        setSenha("");
       } else {
-        setErroPin(true);
-        setPinDigitado("");
+        setErroLogin(dados.erro || "Email ou senha incorretos.");
+        setSenha("");
       }
     } catch {
-      setErroPin(true);
-      setPinDigitado("");
+      setErroLogin("Não foi possível fazer login. Tente novamente.");
+      setSenha("");
     } finally {
-      setVerificandoPin(false);
+      setEntrando(false);
     }
   }
 
   function fecharModal() {
     setMostrarLoginAdmin(false);
-    setErroPin(false);
-    setPinDigitado("");
+    setErroLogin("");
+    setEmail("");
+    setSenha("");
   }
 
   if (autenticado) {
@@ -86,24 +94,41 @@ export default function PortaoAdmin({ children }: PortaoAdminProps) {
       <Header onAdminClick={() => setMostrarLoginAdmin(true)} />
 
       {/* Modal de login admin */}
-      <Modal visible={mostrarLoginAdmin} onDismiss={fecharModal} header="🔒 Área Restrita" size="small">
+      <Modal
+        visible={mostrarLoginAdmin}
+        onDismiss={fecharModal}
+        header={
+          <SpaceBetween direction="horizontal" size="xs" alignItems="center">
+            <Icon name="lock-private" /> Login administrativo
+          </SpaceBetween>
+        }
+        size="small"
+      >
         <SpaceBetween size="m">
           <Box color="text-body-secondary" textAlign="center">
             Painel da Elizete — COMUNA
           </Box>
-          <form onSubmit={verificarPin}>
+          <form onSubmit={fazerLogin}>
             <SpaceBetween size="m">
-              <FormField errorText={erroPin ? "PIN incorreto. Tente novamente." : undefined}>
+              <FormField label="Email">
                 <Input
-                  type="password"
-                  value={pinDigitado}
-                  onChange={({ detail }) => setPinDigitado(detail.value)}
-                  placeholder="Digite o PIN"
+                  type="email"
+                  value={email}
+                  onChange={({ detail }) => setEmail(detail.value)}
+                  placeholder="seu@email.com"
                   autoFocus
                 />
               </FormField>
-              <Button variant="primary" fullWidth loading={verificandoPin} formAction="submit">
-                {verificandoPin ? "Verificando..." : "Entrar"}
+              <FormField label="Senha" errorText={erroLogin || undefined}>
+                <Input
+                  type="password"
+                  value={senha}
+                  onChange={({ detail }) => setSenha(detail.value)}
+                  placeholder="Digite a senha"
+                />
+              </FormField>
+              <Button variant="primary" fullWidth loading={entrando} formAction="submit">
+                {entrando ? "Entrando..." : "Login"}
               </Button>
               <Button variant="link" fullWidth formAction="none" onClick={fecharModal}>
                 Cancelar

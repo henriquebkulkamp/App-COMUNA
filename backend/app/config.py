@@ -19,6 +19,15 @@ class Settings(BaseSettings):
     database_url: str
     cors_origins: str = "http://localhost:5173"
 
+    # Conta admin padrão — semeada automaticamente na primeira vez que
+    # o backend sobe com a tabela `admins` vazia (ver app/main.py).
+    admin_email: str = "admin@comuna.local"
+    admin_senha: str = "comuna123"
+
+    # Chave que assina os tokens de sessão do login admin (ver app/auth.py).
+    # Trocar em produção — qualquer um com essa chave forja token de admin.
+    auth_secret_key: str = "troque-esta-chave-em-producao"
+
     @property
     def database_url_async(self) -> str:
         """DATABASE_URL como veio do .env (postgresql://...) — o driver

@@ -3,6 +3,7 @@ import Modal from "@cloudscape-design/components/modal";
 import Box from "@cloudscape-design/components/box";
 import Button from "@cloudscape-design/components/button";
 import FormField from "@cloudscape-design/components/form-field";
+import Icon from "@cloudscape-design/components/icon";
 import Input from "@cloudscape-design/components/input";
 import Textarea from "@cloudscape-design/components/textarea";
 import RadioGroup from "@cloudscape-design/components/radio-group";
@@ -15,6 +16,7 @@ import { formatarPreco, precoEfetivo } from "@/lib/formatadores";
 import Preco from "@/components/design-system/moleculas/Preco";
 import type { DadosCliente } from "@/lib/types";
 import { apiFetch } from "@/lib/api";
+import Icone from "@/icons/Icone";
 
 interface CheckoutModalProps {
   onFechar: () => void;
@@ -80,10 +82,10 @@ export default function CheckoutModal({ onFechar }: CheckoutModalProps) {
         ? `Retirada em: ${ENDERECO_RETIRADA}`
         : `Entrega no endereço: ${dados.enderecoEntrega}`;
 
-    const observacoesTexto = dados.observacoes ? `\n📝 Observações: ${dados.observacoes}` : "";
+    const observacoesTexto = dados.observacoes ? `\nObservações: ${dados.observacoes}` : "";
 
     const solicitacoesTexto = dados.produtosSolicitados
-      ? `\n\n🛍️ *Produtos Solicitados:*\n${dados.produtosSolicitados}`
+      ? `\n\n*Produtos Solicitados:*\n${dados.produtosSolicitados}`
       : "";
 
     try {
@@ -112,21 +114,21 @@ export default function CheckoutModal({ onFechar }: CheckoutModalProps) {
 
     setSalvandoPedido(false);
 
-    const mensagem = `🌿 *Novo Pedido — COMUNA*
+    const mensagem = `*Novo Pedido — COMUNA*
 
-👤 *Cliente:* ${dados.nome}
-📱 *Celular:* ${dados.celular}
-🚚 *${entregaTexto}*${observacoesTexto}
+*Cliente:* ${dados.nome}
+*Celular:* ${dados.celular}
+*${entregaTexto}*${observacoesTexto}
 
 ━━━━━━━━━━━━━━━━━━━━
-🛒 *Itens do Pedido:*
+*Itens do Pedido:*
 
 ${linhasItens}
 
 ━━━━━━━━━━━━━━━━━━━━
-💰 *Total estimado: ${formatarPreco(totalPreco)}*${solicitacoesTexto}
+*Total estimado: ${formatarPreco(totalPreco)}*${solicitacoesTexto}
 
-⚠️ _Disponibilidade sujeita a confirmação no momento da separação._`;
+_Disponibilidade sujeita a confirmação no momento da separação._`;
 
     const url = `https://wa.me/${whatsappNumero}?text=${encodeURIComponent(mensagem)}`;
     window.open(url, "_blank");
@@ -170,12 +172,20 @@ ${linhasItens}
                 items={[
                   {
                     value: "retirada",
-                    label: "🏠 Retirada",
+                    label: (
+                      <SpaceBetween direction="horizontal" size="xs" alignItems="center">
+                        <Icon name="location-pin" /> Retirada
+                      </SpaceBetween>
+                    ),
                     description: ENDERECO_RETIRADA,
                   },
                   {
                     value: "entrega",
-                    label: "🚚 Entrega",
+                    label: (
+                      <SpaceBetween direction="horizontal" size="xs" alignItems="center">
+                        <Icone nome="caminhao" /> Entrega
+                      </SpaceBetween>
+                    ),
                     description: "Via COMUNA",
                   },
                 ]}
@@ -224,13 +234,27 @@ ${linhasItens}
         <SpaceBetween size="m">
           <Container>
             <SpaceBetween size="xs">
-              <Box>👤 {dados.nome}</Box>
-              <Box>📱 {dados.celular}</Box>
               <Box>
-                {dados.tipoEntrega === "retirada" ? "🏠" : "🚚"}{" "}
-                {dados.tipoEntrega === "retirada"
-                  ? `Retirada — ${ENDERECO_RETIRADA}`
-                  : `Entrega — ${dados.enderecoEntrega}`}
+                <SpaceBetween direction="horizontal" size="xs" alignItems="center">
+                  <Icon name="user-profile" /> {dados.nome}
+                </SpaceBetween>
+              </Box>
+              <Box>
+                <SpaceBetween direction="horizontal" size="xs" alignItems="center">
+                  <Icon name="call" /> {dados.celular}
+                </SpaceBetween>
+              </Box>
+              <Box>
+                <SpaceBetween direction="horizontal" size="xs" alignItems="center">
+                  {dados.tipoEntrega === "retirada" ? (
+                    <Icon name="location-pin" />
+                  ) : (
+                    <Icone nome="caminhao" />
+                  )}
+                  {dados.tipoEntrega === "retirada"
+                    ? `Retirada — ${ENDERECO_RETIRADA}`
+                    : `Entrega — ${dados.enderecoEntrega}`}
+                </SpaceBetween>
               </Box>
             </SpaceBetween>
           </Container>
@@ -267,8 +291,8 @@ ${linhasItens}
 
           <SpaceBetween direction="horizontal" size="xs">
             <Button onClick={() => setEtapa("formulario")}>← Voltar</Button>
-            <Button onClick={enviarWhatsApp} disabled={salvandoPedido} variant="primary">
-              📲 {salvandoPedido ? "Registrando pedido..." : "Enviar via WhatsApp"}
+            <Button onClick={enviarWhatsApp} disabled={salvandoPedido} variant="primary" iconName="send">
+              {salvandoPedido ? "Registrando pedido..." : "Enviar via WhatsApp"}
             </Button>
           </SpaceBetween>
         </SpaceBetween>

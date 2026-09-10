@@ -85,6 +85,22 @@ CREATE TABLE IF NOT EXISTS solicitacoes (
 );
 
 -- ============================================================
+-- ADMINS — login do painel administrativo. Substitui o antigo PIN
+-- único (chave "pin" em `configuracoes`, agora sem uso) por conta
+-- individual com senha. `senha_hash` nunca guarda a senha em texto
+-- puro — ver backend/app/auth.py (PBKDF2-HMAC-SHA256, com sal por
+-- senha). A conta padrão (ADMIN_EMAIL/ADMIN_SENHA do backend/.env) é
+-- semeada automaticamente pelo backend na primeira vez que ele sobe
+-- com a tabela vazia — ver backend/app/main.py.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS admins (
+  id          BIGSERIAL PRIMARY KEY,
+  email       TEXT UNIQUE NOT NULL,
+  senha_hash  TEXT NOT NULL,
+  criado_em   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- ============================================================
 -- PERF_LOGS — removida. Guardava métricas de performance (Web
 -- Vitals/long tasks) só pra alimentar um dashboard do Grafana que
 -- nunca chegou a ser usado (ver docker-compose.yml e lib/observabilidade.ts,

@@ -2,16 +2,18 @@ import { useState, lazy, Suspense } from "react";
 import Container from "@cloudscape-design/components/container";
 import Box from "@cloudscape-design/components/box";
 import Button from "@cloudscape-design/components/button";
+import Icon from "@cloudscape-design/components/icon";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import {
   colorBackgroundLayoutMain,
   spaceScaledS,
   spaceScaledM,
   spaceScaledXl,
-  fontSizeHeadingXl,
 } from "@cloudscape-design/design-tokens";
 import Header from "@/components/shared/Header";
 import { LojaProvider } from "@/lib/loja-context";
+import { TOKEN_STORAGE_KEY } from "@/lib/api";
+import Icone from "@/icons/Icone";
 
 // Table/ColumnLayout/Checkbox/Select/Textarea (e o próprio Tabs) só
 // existem pra essas 3 telas — code-split (React.lazy) pra não entrar
@@ -31,8 +33,8 @@ interface PainelAdminProps {
 }
 
 // ============================================================
-// PainelAdmin — área da Elizete. Só existe depois que o PIN é
-// verificado (ver PortaoAdmin.tsx). LojaProvider fica escopado aqui
+// PainelAdmin — área da Elizete. Só existe depois do login (ver
+// PortaoAdmin.tsx). LojaProvider fica escopado aqui
 // dentro (não mais em app/layout.tsx): é o único lugar que precisa de
 // estado client com updates otimistas pra editar estoque/preço/cesta —
 // a vitrine pública não depende mais dele (busca os produtos direto do
@@ -42,7 +44,7 @@ export default function PainelAdmin({ onSair }: PainelAdminProps) {
   const [abaAtiva, setAbaAtiva] = useState<AbaAtiva>("cesta");
 
   function sair() {
-    localStorage.removeItem("comuna_admin_auth");
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
     onSair();
   }
 
@@ -55,7 +57,7 @@ export default function PainelAdmin({ onSair }: PainelAdminProps) {
           <SpaceBetween size="l">
             <Container>
               <div style={{ display: "flex", alignItems: "center", gap: spaceScaledS }}>
-                <span style={{ fontSize: fontSizeHeadingXl }}>👩‍🌾</span>
+                <Icon name="user-profile" size="large" />
                 <div style={{ flex: 1 }}>
                   <Box fontWeight="bold">Olá, Elizete!</Box>
                   <Box color="text-body-secondary" fontSize="body-s">
@@ -74,9 +76,33 @@ export default function PainelAdmin({ onSair }: PainelAdminProps) {
                   activeTabId={abaAtiva}
                   onChange={({ detail }) => setAbaAtiva(detail.activeTabId as AbaAtiva)}
                   tabs={[
-                    { id: "cesta", label: "🧺 Montar Cesta da Semana", content: <MontarCesta /> },
-                    { id: "estoque", label: "📦 Gerenciar Estoque", content: <GerenciarEstoque /> },
-                    { id: "config", label: "⚙️ Configurações", content: <Configuracoes /> },
+                    {
+                      id: "cesta",
+                      label: (
+                        <SpaceBetween direction="horizontal" size="xs" alignItems="center">
+                          <Icone nome="cesta" /> Montar Cesta da Semana
+                        </SpaceBetween>
+                      ),
+                      content: <MontarCesta />,
+                    },
+                    {
+                      id: "estoque",
+                      label: (
+                        <SpaceBetween direction="horizontal" size="xs" alignItems="center">
+                          <Icone nome="caixa" /> Gerenciar Estoque
+                        </SpaceBetween>
+                      ),
+                      content: <GerenciarEstoque />,
+                    },
+                    {
+                      id: "config",
+                      label: (
+                        <SpaceBetween direction="horizontal" size="xs" alignItems="center">
+                          <Icon name="settings" /> Configurações
+                        </SpaceBetween>
+                      ),
+                      content: <Configuracoes />,
+                    },
                   ]}
                 />
               </Suspense>

@@ -111,3 +111,12 @@ class Solicitacao(Base):
     nome_cliente: Mapped[str] = mapped_column(Text, nullable=False)
     celular: Mapped[str] = mapped_column(Text, nullable=False)
     produtos_solicitados: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class Admin(Base):
+    __tablename__ = "admins"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    email: Mapped[str] = mapped_column(Text, unique=True, nullable=False)
+    senha_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    criado_em: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now())

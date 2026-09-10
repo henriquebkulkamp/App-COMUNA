@@ -13,12 +13,13 @@ import { useCarrinho } from "@/lib/carrinho-context";
 import { formatarPreco, precoEfetivo } from "@/lib/formatadores";
 import CheckoutModal from "@/components/cliente/CheckoutModal";
 import Preco from "@/components/design-system/moleculas/Preco";
+import Icone from "@/icons/Icone";
 
 // ============================================================
 // Carrinho — vive na própria página (/carrinho, ver
 // src/pages/PaginaCarrinho.tsx), então traz seu próprio título e moldura
 // (Container + Box variant="h1"). Antes vivia dentro do Modal aberto
-// pelo ícone 🛒 do Header, que fornecia título e moldura de fora.
+// pelo botão do carrinho no Header, que fornecia título e moldura de fora.
 // ============================================================
 export default function Carrinho() {
   const { itens, totalItens, totalPreco, aumentar, diminuir, remover } = useCarrinho();
@@ -27,12 +28,17 @@ export default function Carrinho() {
   return (
     <Container>
       <Box variant="h1" padding={{ bottom: "m" }}>
-        🛒 Seu Carrinho{totalItens > 0 ? ` (${totalItens})` : ""}
+        <SpaceBetween direction="horizontal" size="xs" alignItems="center">
+          <Icone nome="carrinho" tamanho={24} />
+          Seu Carrinho{totalItens > 0 ? ` (${totalItens})` : ""}
+        </SpaceBetween>
       </Box>
 
       {itens.length === 0 ? (
         <Box textAlign="center" color="text-body-secondary" padding="l">
-          <Box fontSize="display-l">🌱</Box>
+          <Box padding={{ bottom: "xs" }}>
+            <Icone nome="muda" tamanho={40} />
+          </Box>
           Seu carrinho está vazio.
         </Box>
       ) : (

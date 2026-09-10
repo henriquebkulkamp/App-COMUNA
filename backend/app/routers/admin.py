@@ -1,9 +1,14 @@
 # ============================================================
 # /api/admin/** — espelha app/api/admin/**/route.ts, um handler por
-# arquivo original. Nenhuma dessas rotas verifica sessão/token hoje
-# (mesmo "buraco" que já existia no Next.js: o PIN é só checado no
-# formulário do painel, não nas rotas de mutação em si) — preservado
-# de propósito, não é bug desta migração.
+# arquivo original.
+#
+# POST /login é a única rota aberta daqui — todas as outras (mutação
+# de estoque/preço/cesta/produto/config) agora exigem
+# `Authorization: Bearer <token>` válido (Depends(exigir_admin), ver
+# app/auth.py). Isso substitui o antigo "buraco" que existia no
+# Next.js (PIN só checado no formulário do painel, nunca nas rotas de
+# mutação em si) — a migração pro login por conta foi a oportunidade
+# de fechar isso, não só trocar a cara do PIN.
 # ============================================================
 
 import logging
@@ -14,6 +19,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .. import crud
+from ..auth import exigir_admin
 from ..cache import invalidar_cache_produtos
 from ..database import get_session
 
@@ -34,48 +40,51 @@ CATEGORIAS_VALIDAS = (
 )
 
 
-# ─── POST /api/admin/verificar-pin ─────────────────────────────
-@router.post("/verificar-pin")
-async def verificar_pin(request: Request, session: AsyncSession = Depends(get_session)):
+# ─── POST /api/admin/login ───────────────────────────────────────
+# Substitui POST /api/admin/verificar-pin. Corpo: { email, senha }.
+# Retorna { sucesso: true, token } ou 401 se email/senha não baterem.
+@router.post("/login")
+async def login(request: Request, session: AsyncSession = Depends(get_session)):
     try:
         body = await request.json()
-        pin = body.get("pin")
+        email = body.get("email")
+        senha = body.get("senha")
 
-        if not isinstance(pin, str) or not pin:
-            return JSONResponse(status_code=400, content={"erro": "Campo obrigatório: pin"})
+        if not isinstance(email, str) or not email or not isinstance(senha, str) or not senha:
+            return JSONResponse(status_code=400, content={"erro": "Campos obrigatórios: email, senha"})
 
-        valido = await crud.verificar_pin(session, pin)
-        return {"valido": valido}
+        token = await crud.autenticar_admin(session, email, senha)
+        if token is None:
+            return JSONResponse(status_code=401, content={"erro": "Email ou senha incorretos."})
+
+        return {"sucesso": True, "token": token}
     except Exception as erro:
-        logger.error("[POST /api/admin/verificar-pin] Erro: %s", erro)
+        logger.error("[POST /api/admin/login] Erro: %s", erro)
         return JSONResponse(
-            status_code=500, content={"erro": "Não foi possível verificar o PIN. Tente novamente."}
+            status_code=500, content={"erro": "Não foi possível fazer login. Tente novamente."}
         )
 
 
 # ─── PATCH /api/admin/config ────────────────────────────────────
-# Atualiza o PIN ou o número de WhatsApp — espelha app/api/admin/config/route.ts
+# Atualiza o número de WhatsApp — espelha app/api/admin/config/route.ts,
+# exceto o campo "pin" (removido; senha de admin não se troca por aqui
+# ainda — ver observações na conversa da migração).
 @router.patch("/config")
-async def atualizar_config(request: Request, session: AsyncSession = Depends(get_session)):
+async def atualizar_config(
+    request: Request, session: AsyncSession = Depends(get_session), admin_id: int = Depends(exigir_admin)
+):
     try:
         body = await request.json()
         campo = body.get("campo")
         valor = body.get("valor")
 
-        if campo != "pin" and campo != "whatsappNumero":
-            return JSONResponse(
-                status_code=400, content={"erro": 'Campo "campo" deve ser "pin" ou "whatsappNumero"'}
-            )
+        if campo != "whatsappNumero":
+            return JSONResponse(status_code=400, content={"erro": 'Campo "campo" deve ser "whatsappNumero"'})
 
         if not isinstance(valor, str) or not valor.strip():
             return JSONResponse(status_code=400, content={"erro": "Campo obrigatório: valor"})
 
-        if campo == "pin" and not re.fullmatch(r"\d{4,6}", valor):
-            return JSONResponse(
-                status_code=400, content={"erro": "O PIN deve ter entre 4 e 6 dígitos numéricos"}
-            )
-
-        if campo == "whatsappNumero" and not re.fullmatch(r"\d{10,13}", valor):
+        if not re.fullmatch(r"\d{10,13}", valor):
             return JSONResponse(
                 status_code=400,
                 content={
@@ -94,7 +103,9 @@ async def atualizar_config(request: Request, session: AsyncSession = Depends(get
 
 # ─── PATCH /api/admin/estoque ───────────────────────────────────
 @router.patch("/estoque")
-async def atualizar_estoque(request: Request, session: AsyncSession = Depends(get_session)):
+async def atualizar_estoque(
+    request: Request, session: AsyncSession = Depends(get_session), admin_id: int = Depends(exigir_admin)
+):
     try:
         body = await request.json()
         produto_id = body.get("produtoId")
@@ -120,7 +131,9 @@ async def atualizar_estoque(request: Request, session: AsyncSession = Depends(ge
 
 # ─── PATCH /api/admin/preco ─────────────────────────────────────
 @router.patch("/preco")
-async def atualizar_preco(request: Request, session: AsyncSession = Depends(get_session)):
+async def atualizar_preco(
+    request: Request, session: AsyncSession = Depends(get_session), admin_id: int = Depends(exigir_admin)
+):
     try:
         body = await request.json()
         produto_id = body.get("produtoId")
@@ -148,7 +161,9 @@ async def atualizar_preco(request: Request, session: AsyncSession = Depends(get_
 
 # ─── PATCH /api/admin/preco-real ────────────────────────────────
 @router.patch("/preco-real")
-async def atualizar_preco_real(request: Request, session: AsyncSession = Depends(get_session)):
+async def atualizar_preco_real(
+    request: Request, session: AsyncSession = Depends(get_session), admin_id: int = Depends(exigir_admin)
+):
     try:
         body = await request.json()
         produto_id = body.get("produtoId")
@@ -174,7 +189,9 @@ async def atualizar_preco_real(request: Request, session: AsyncSession = Depends
 
 # ─── PATCH /api/admin/unidade ───────────────────────────────────
 @router.patch("/unidade")
-async def atualizar_unidade(request: Request, session: AsyncSession = Depends(get_session)):
+async def atualizar_unidade(
+    request: Request, session: AsyncSession = Depends(get_session), admin_id: int = Depends(exigir_admin)
+):
     try:
         body = await request.json()
         produto_id = body.get("produtoId")
@@ -195,7 +212,9 @@ async def atualizar_unidade(request: Request, session: AsyncSession = Depends(ge
 
 # ─── PATCH /api/admin/cesta ─────────────────────────────────────
 @router.patch("/cesta")
-async def atualizar_cesta(request: Request, session: AsyncSession = Depends(get_session)):
+async def atualizar_cesta(
+    request: Request, session: AsyncSession = Depends(get_session), admin_id: int = Depends(exigir_admin)
+):
     try:
         body = await request.json()
         produto_id = body.get("produtoId")
@@ -215,7 +234,9 @@ async def atualizar_cesta(request: Request, session: AsyncSession = Depends(get_
 
 # ─── POST /api/admin/produto — cria produto ─────────────────────
 @router.post("/produto")
-async def criar_produto(request: Request, session: AsyncSession = Depends(get_session)):
+async def criar_produto(
+    request: Request, session: AsyncSession = Depends(get_session), admin_id: int = Depends(exigir_admin)
+):
     try:
         body = await request.json()
         id_ = body.get("id")
@@ -258,7 +279,9 @@ async def criar_produto(request: Request, session: AsyncSession = Depends(get_se
 
 # ─── DELETE /api/admin/produto — remove produto ─────────────────
 @router.delete("/produto")
-async def remover_produto(request: Request, session: AsyncSession = Depends(get_session)):
+async def remover_produto(
+    request: Request, session: AsyncSession = Depends(get_session), admin_id: int = Depends(exigir_admin)
+):
     try:
         body = await request.json()
         produto_id = body.get("produtoId")

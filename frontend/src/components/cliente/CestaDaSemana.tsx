@@ -12,6 +12,7 @@ import {
 } from "@cloudscape-design/design-tokens";
 import { useCarrinho } from "@/lib/carrinho-context";
 import Preco from "@/components/design-system/moleculas/Preco";
+import Icone from "@/icons/Icone";
 import type { Produto } from "@/lib/types";
 
 // Mais respiro que o padrão do Container (que é pensado pra seções
@@ -45,7 +46,9 @@ function CartaoCesta({ titulo, produto, itens }: CartaoCestaProps) {
           variant="h2"
           actions={<Preco valor={produto.preco} valorComDesconto={produto.precoReal} tamanho="grande" />}
         >
-          🧺 {titulo}
+          <SpaceBetween direction="horizontal" size="xs" alignItems="center">
+            <Icone nome="cesta" /> {titulo}
+          </SpaceBetween>
         </Header>
       }
     >
@@ -142,11 +145,19 @@ export default function CestaDaSemana({
         <Container
           style={estiloSecao}
           fitHeight
-          header={<Header variant="h1">🧺 Cesta da Semana</Header>}
+          header={
+            <Header variant="h1">
+              <SpaceBetween direction="horizontal" size="xs" alignItems="center">
+                <Icone nome="cesta" /> Cesta da Semana
+              </SpaceBetween>
+            </Header>
+          }
         >
           <div style={{ height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
             <Box textAlign="center" color="text-body-secondary">
-              <Box fontSize="display-l">🌱</Box>
+              <Box padding={{ bottom: "xs" }}>
+                <Icone nome="muda" tamanho={40} />
+              </Box>
               A cesta desta semana ainda não foi montada.
               <br />
               Volte em breve!
@@ -167,7 +178,9 @@ export default function CestaDaSemana({
             variant="h1"
             description="Selecionada com carinho pela COMUNA. A composição pode variar conforme a oferta dos produtores."
           >
-            🧺 Cesta da Semana
+            <SpaceBetween direction="horizontal" size="xs" alignItems="center">
+              <Icone nome="cesta" /> Cesta da Semana
+            </SpaceBetween>
           </Header>
         }
       >

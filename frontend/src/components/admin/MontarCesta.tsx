@@ -11,6 +11,7 @@ import { spaceScaledXs } from "@cloudscape-design/design-tokens";
 import { useLoja } from "@/lib/loja-context";
 import type { Produto } from "@/lib/types";
 import { apiFetch } from "@/lib/api";
+import Icone from "@/icons/Icone";
 
 export default function MontarCesta() {
   const {
@@ -143,7 +144,11 @@ export default function MontarCesta() {
         <ColumnLayout columns={2}>
           {cestaGrande && (
             <SpaceBetween size="s">
-              <Box fontWeight="bold">🧺 Cesta Grande</Box>
+              <Box fontWeight="bold">
+                <SpaceBetween direction="horizontal" size="xs" alignItems="center">
+                  <Icone nome="cesta" /> Cesta Grande
+                </SpaceBetween>
+              </Box>
               <div style={{ display: "flex", alignItems: "center", gap: spaceScaledXs }}>
                 <Box>R$</Box>
                 <Input
@@ -185,7 +190,11 @@ export default function MontarCesta() {
 
           {cestaPequena && (
             <SpaceBetween size="s">
-              <Box fontWeight="bold">🧺 Cesta Pequena</Box>
+              <Box fontWeight="bold">
+                <SpaceBetween direction="horizontal" size="xs" alignItems="center">
+                  <Icone nome="cesta" /> Cesta Pequena
+                </SpaceBetween>
+              </Box>
               <div style={{ display: "flex", alignItems: "center", gap: spaceScaledXs }}>
                 <Box>R$</Box>
                 <Input

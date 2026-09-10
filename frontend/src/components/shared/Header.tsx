@@ -13,10 +13,11 @@ import {
   spaceScaledXxs,
   fontSizeBodyS,
   fontSizeBodyM,
-  fontSizeHeadingM,
   spaceScaledL,
 } from "@cloudscape-design/design-tokens";
 import { useCarrinho } from "@/lib/carrinho-context";
+import Icone from "@/icons/Icone";
+import IconeSvgCarrinho from "@/icons/IconeSvgCarrinho";
 
 interface HeaderProps {
   mostrarCarrinho?: boolean;
@@ -69,7 +70,7 @@ export default function Header({
           to="/cliente"
           style={{ display: "flex", alignItems: "center", gap: spaceScaledXs, textDecoration: "none" }}
         >
-          <span style={{ fontSize: fontSizeHeadingM }}>🌿</span>
+          <Icone nome="folha" tamanho={24} />
           <Box color="inherit">
             <span
               style={{
@@ -128,9 +129,8 @@ export default function Header({
                 }}
                 variant="normal"
                 ariaLabel="Ver carrinho"
-              >
-                🛒
-              </Button>
+                iconSvg={<IconeSvgCarrinho />}
+              />
               {totalItens > 0 && (
                 <span
                   style={{
