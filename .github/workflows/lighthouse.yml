@@ -1,0 +1,100 @@
+name: Lighthouse CI
+
+# Roda em todo push (qualquer branch) e também pode ser disparado manualmente.
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  lighthouse:
+    name: Auditoria Lighthouse
+    runs-on: ubuntu-latest
+    # Banco de verdade pro pipeline — sem isso, /api/produtos não tem
+    # DATABASE_URL e cai fora, e a home some sem catálogo.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: comuna
+          POSTGRES_PASSWORD: comuna
+          POSTGRES_DB: comuna
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U comuna -d comuna"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://comuna:comuna@localhost:5432/comuna
+      # CORS_ORIGINS não é setado aqui de propósito — o default do
+      # backend/ (ver backend/app/config.py) já é http://localhost:5173,
+      # que é a porta que o `vite preview` usa mais abaixo.
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Instalar dependências da raiz (só os scripts de banco em db/*.mjs)
+        run: npm ci
+
+      - name: Instalar dependências do frontend/
+        run: npm ci --prefix frontend
+
+      - name: Instalar dependências do backend/
+        run: pip install -r backend/requirements.txt
+
+      - name: Preparar banco de dados (schema via Alembic + catálogo de demonstração)
+        run: |
+          alembic -c backend/alembic.ini upgrade head
+          node db/seed.mjs
+
+      - name: Build do frontend/ (Vite + React + TypeScript)
+        run: npm run build --prefix frontend
+
+      - name: Iniciar backend/ (FastAPI + Uvicorn)
+        run: |
+          nohup uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 > backend.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8000/health > /dev/null; then
+              echo "Backend pronto"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Backend não respondeu a tempo"
+          cat backend.log
+          exit 1
+
+      - name: Iniciar frontend/ (preview do build de produção)
+        run: |
+          nohup npm run preview --prefix frontend -- --port 5173 --strictPort > frontend.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:5173/ > /dev/null; then
+              echo "Frontend pronto"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Frontend não respondeu a tempo"
+          cat frontend.log
+          exit 1
+
+      - name: Rodar Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          # configPath, não inputs soltos: lighthouserc.js já define url,
+          # numberOfRuns e throttling — fonte única, mesma usada local via
+          # `npm run test:lighthouse` (ver lighthouserc.js).
+          configPath: ./lighthouserc.js
+          uploadArtifacts: true

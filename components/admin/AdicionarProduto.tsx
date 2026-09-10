@@ -1,6 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import Modal from "@cloudscape-design/components/modal";
+import FormField from "@cloudscape-design/components/form-field";
+import Input from "@cloudscape-design/components/input";
+import Select from "@cloudscape-design/components/select";
+import Textarea from "@cloudscape-design/components/textarea";
+import Alert from "@cloudscape-design/components/alert";
+import Button from "@cloudscape-design/components/button";
+import SpaceBetween from "@cloudscape-design/components/space-between";
 import { useLoja } from "@/lib/loja-context";
 import type { Categoria, Produto } from "@/lib/types";
 
@@ -21,7 +29,6 @@ interface AdicionarProdutoProps {
 }
 
 // Gera um id único a partir do nome do produto
-// Analogia: slugify() em Django
 function gerarId(nome: string): string {
   return (
     nome
@@ -63,7 +70,7 @@ export default function AdicionarProduto({ onFechar }: AdicionarProdutoProps) {
       unidade: form.unidade.trim(),
       categoria: form.categoria,
       descricao: form.descricao.trim() || undefined,
-      emEstoque: true, // já ativa no estoque ao criar
+      emEstoque: true,
       quantidade: 0,
       naCestaGrande: false,
       naCestaPequena: false,
@@ -87,7 +94,6 @@ export default function AdicionarProduto({ onFechar }: AdicionarProdutoProps) {
         const dados = await res.json();
         throw new Error(dados.erro || "Erro ao salvar na planilha");
       }
-      // Só atualiza o estado local depois de confirmar que gravou na planilha
       adicionarProduto(novoProduto);
       onFechar();
     } catch (erro) {
@@ -98,124 +104,66 @@ export default function AdicionarProduto({ onFechar }: AdicionarProdutoProps) {
   }
 
   return (
-    <div
-      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onFechar();
-      }}
-    >
-      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-y-auto max-h-[90vh]">
-        <div className="flex items-center justify-between p-5 border-b border-gray-100">
-          <h2 className="font-bold text-verde-700 text-lg">Novo Produto</h2>
-          <button
-            onClick={onFechar}
-            className="text-gray-400 hover:text-gray-600 text-xl"
-          >
-            ✕
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nome *
-            </label>
-            <input
-              type="text"
-              required
+    <Modal visible onDismiss={onFechar} header="Novo Produto" size="medium">
+      <form onSubmit={handleSubmit}>
+        <SpaceBetween size="m">
+          <FormField label="Nome *">
+            <Input
               value={form.nome}
-              onChange={(e) => setForm({ ...form, nome: e.target.value })}
+              onChange={({ detail }) => setForm({ ...form, nome: detail.value })}
               placeholder="Ex: Pitomba"
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-verde-300"
             />
-          </div>
+          </FormField>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Preço (R$) *
-              </label>
-              <input
-                type="number"
-                required
-                step="0.50"
-                min="0.01"
-                value={form.preco}
-                onChange={(e) => setForm({ ...form, preco: e.target.value })}
-                placeholder="0,00"
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-verde-300"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Unidade *
-              </label>
-              <input
-                type="text"
-                required
-                value={form.unidade}
-                onChange={(e) => setForm({ ...form, unidade: e.target.value })}
-                placeholder="Ex: 500g, 1 unidade"
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-verde-300"
-              />
-            </div>
-          </div>
+          <FormField label="Preço (R$) *">
+            <Input
+              type="number"
+              step={0.5}
+              value={form.preco}
+              onChange={({ detail }) => setForm({ ...form, preco: detail.value })}
+              placeholder="0,00"
+            />
+          </FormField>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Categoria *
-            </label>
-            <select
-              value={form.categoria}
-              onChange={(e) =>
-                setForm({ ...form, categoria: e.target.value as Categoria })
+          <FormField label="Unidade *">
+            <Input
+              value={form.unidade}
+              onChange={({ detail }) => setForm({ ...form, unidade: detail.value })}
+              placeholder="Ex: 500g, 1 unidade"
+            />
+          </FormField>
+
+          <FormField label="Categoria *">
+            <Select
+              selectedOption={{ value: form.categoria, label: form.categoria }}
+              onChange={({ detail }) =>
+                setForm({ ...form, categoria: detail.selectedOption.value as Categoria })
               }
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-verde-300 bg-white"
-            >
-              {CATEGORIAS.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
-          </div>
+              options={CATEGORIAS.map((cat) => ({ value: cat, label: cat }))}
+            />
+          </FormField>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Descrição (opcional)
-            </label>
-            <textarea
+          <FormField label="Descrição (opcional)">
+            <Textarea
               value={form.descricao}
-              onChange={(e) =>
-                setForm({ ...form, descricao: e.target.value })
-              }
+              onChange={({ detail }) => setForm({ ...form, descricao: detail.value })}
               placeholder="Uma linha sobre o produto..."
               rows={2}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-verde-300 resize-none"
             />
-          </div>
+          </FormField>
 
-          {erro && (
-            <p className="text-red-500 text-sm bg-red-50 rounded-xl px-3 py-2">
-              {erro}
-            </p>
-          )}
+          {erro && <Alert type="error">{erro}</Alert>}
 
-          <div className="flex gap-2 pt-1">
-            <button
-              type="button"
-              onClick={onFechar}
-              disabled={salvando}
-              className="flex-1 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
-            >
+          <SpaceBetween direction="horizontal" size="xs">
+            <Button onClick={onFechar} disabled={salvando} formAction="none">
               Cancelar
-            </button>
-            <button type="submit" disabled={salvando} className="flex-1 btn-primary disabled:opacity-60">
+            </Button>
+            <Button variant="primary" loading={salvando} formAction="submit">
               {salvando ? "Salvando..." : "Adicionar Produto"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+            </Button>
+          </SpaceBetween>
+        </SpaceBetween>
+      </form>
+    </Modal>
   );
 }

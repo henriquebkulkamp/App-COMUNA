@@ -18,16 +18,23 @@ import {
   useContext,
   useReducer,
   useCallback,
+  useEffect,
   ReactNode,
 } from "react";
 import type { Produto, ItemCarrinho } from "./types";
+import { precoEfetivo } from "./formatadores";
+
+// Chave usada para salvar/recuperar do localStorage — mesmo esquema de
+// versionamento usado em lib/loja-context.tsx (STORAGE_KEY).
+const STORAGE_KEY = "comuna_carrinho_v1";
 
 type Action =
   | { type: "ADICIONAR"; produto: Produto }
   | { type: "REMOVER"; id: string }
   | { type: "AUMENTAR"; id: string }
   | { type: "DIMINUIR"; id: string }
-  | { type: "LIMPAR" };
+  | { type: "LIMPAR" }
+  | { type: "CARREGAR_ESTADO"; estado: EstadoCarrinho };
 
 interface EstadoCarrinho {
   // Usamos um Record (dicionário) para acesso O(1) por id
@@ -37,6 +44,9 @@ interface EstadoCarrinho {
 
 function reducer(estado: EstadoCarrinho, action: Action): EstadoCarrinho {
   switch (action.type) {
+    case "CARREGAR_ESTADO":
+      return action.estado;
+
     case "ADICIONAR": {
       const existente = estado.itens[action.produto.id];
       return {
@@ -111,6 +121,34 @@ const CarrinhoContext = createContext<CarrinhoContextType | null>(null);
 export function CarrinhoProvider({ children }: { children: ReactNode }) {
   const [estado, dispatch] = useReducer(reducer, { itens: {} });
 
+  // Carrega o carrinho salvo do localStorage — roda uma vez quando o
+  // app abre. Precisa ser um useEffect (depois da montagem), não algo
+  // síncrono no useReducer, senão a primeira renderização no cliente
+  // diverge da renderização do servidor (mismatch de hidratação).
+  // Mesmo padrão de lib/loja-context.tsx.
+  useEffect(() => {
+    try {
+      const salvo = localStorage.getItem(STORAGE_KEY);
+      if (salvo) {
+        const estadoSalvo: EstadoCarrinho = JSON.parse(salvo);
+        dispatch({ type: "CARREGAR_ESTADO", estado: estadoSalvo });
+      }
+    } catch (erro) {
+      console.warn("[CarrinhoContext] Cache local inválido, iniciando carrinho vazio:", erro);
+    }
+  }, []);
+
+  // Salva no localStorage sempre que o estado mudar (inclusive quando
+  // esvazia, ex: `limpar()` depois do checkout — é o mesmo efeito que
+  // grava tudo, então o valor salvo some junto).
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(estado));
+    } catch (erro) {
+      console.warn("[CarrinhoContext] Não foi possível salvar o carrinho:", erro);
+    }
+  }, [estado]);
+
   // Converte o Record em array para facilitar iteração nos componentes
   // Analogia Python: list(itens.values())
   const itens = Object.values(estado.itens);
@@ -118,9 +156,11 @@ export function CarrinhoProvider({ children }: { children: ReactNode }) {
   // sum(item['quantidade'] for item in itens)
   const totalItens = itens.reduce((acc, item) => acc + item.quantidade, 0);
 
-  // sum(item['produto']['preco'] * item['quantidade'] for item in itens)
+  // Usa o preço efetivo (com desconto quando houver) — é o que o
+  // cliente de fato paga, não necessariamente o preço base.
+  // sum(preco_efetivo(item['produto']) * item['quantidade'] for item in itens)
   const totalPreco = itens.reduce(
-    (acc, item) => acc + item.produto.preco * item.quantidade,
+    (acc, item) => acc + precoEfetivo(item.produto) * item.quantidade,
     0
   );
 

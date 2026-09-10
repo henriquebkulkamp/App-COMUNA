@@ -1,6 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import Container from "@cloudscape-design/components/container";
+import Header from "@cloudscape-design/components/header";
+import Box from "@cloudscape-design/components/box";
+import FormField from "@cloudscape-design/components/form-field";
+import Input from "@cloudscape-design/components/input";
+import Button from "@cloudscape-design/components/button";
+import Alert from "@cloudscape-design/components/alert";
+import SpaceBetween from "@cloudscape-design/components/space-between";
 
 // ============================================================
 // Configuracoes — Painel para Elizete trocar o PIN de acesso e o
@@ -64,13 +72,13 @@ export default function Configuracoes() {
     setErroWhatsapp("");
     setSucessoWhatsapp(false);
 
-    // Aceita o número com ou sem formatação e mantém só os dígitos.
-    // Analogia Python: re.sub(r"\D", "", numero)
     const apenasDigitos = novoWhatsapp.replace(/\D/g, "");
     const comDDI = apenasDigitos.startsWith("55") ? apenasDigitos : `55${apenasDigitos}`;
 
     if (!/^\d{12,13}$/.test(comDDI)) {
-      setErroWhatsapp("Número inválido. Digite DDD + número, com 10 ou 11 dígitos (ex: 16999999999).");
+      setErroWhatsapp(
+        "Número inválido. Digite DDD + número, com 10 ou 11 dígitos (ex: 16999999999)."
+      );
       return;
     }
 
@@ -87,93 +95,68 @@ export default function Configuracoes() {
   }
 
   return (
-    <div className="space-y-6">
+    <SpaceBetween size="l">
       {/* ── Trocar PIN ──────────────────────────────────────── */}
-      <form
-        onSubmit={handleSalvarPin}
-        className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3"
-      >
-        <p className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-          🔒 Trocar PIN de acesso
-        </p>
-        <p className="text-xs text-gray-500">
-          O PIN é usado para entrar nesta área administrativa. Use de 4 a 6 números.
-        </p>
-
-        <div>
-          <label className="block text-xs text-gray-500 mb-1">Novo PIN</label>
-          <input
-            type="password"
-            inputMode="numeric"
-            maxLength={6}
-            value={novoPin}
-            onChange={(e) => setNovoPin(e.target.value.replace(/\D/g, ""))}
-            placeholder="Ex: 123456"
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-verde-300"
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs text-gray-500 mb-1">Confirmar novo PIN</label>
-          <input
-            type="password"
-            inputMode="numeric"
-            maxLength={6}
-            value={confirmarPin}
-            onChange={(e) => setConfirmarPin(e.target.value.replace(/\D/g, ""))}
-            placeholder="Digite novamente"
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-verde-300"
-          />
-        </div>
-
-        {erroPin && <p className="text-xs text-red-500">{erroPin}</p>}
-        {sucessoPin && <p className="text-xs text-verde-600">PIN atualizado com sucesso!</p>}
-
-        <button
-          type="submit"
-          disabled={salvandoPin}
-          className="w-full py-2 rounded-lg bg-verde-600 hover:bg-verde-700 text-white text-sm font-semibold transition-colors disabled:opacity-60"
-        >
-          {salvandoPin ? "Salvando..." : "Salvar novo PIN"}
-        </button>
-      </form>
+      <Container header={<Header variant="h3">🔒 Trocar PIN de acesso</Header>}>
+        <form onSubmit={handleSalvarPin}>
+          <SpaceBetween size="s">
+            <Box color="text-body-secondary" fontSize="body-s">
+              O PIN é usado para entrar nesta área administrativa. Use de 4 a 6 números.
+            </Box>
+            <FormField label="Novo PIN">
+              <Input
+                type="password"
+                inputMode="numeric"
+                value={novoPin}
+                onChange={({ detail }) => setNovoPin(detail.value.replace(/\D/g, "").slice(0, 6))}
+                placeholder="Ex: 123456"
+              />
+            </FormField>
+            <FormField label="Confirmar novo PIN">
+              <Input
+                type="password"
+                inputMode="numeric"
+                value={confirmarPin}
+                onChange={({ detail }) =>
+                  setConfirmarPin(detail.value.replace(/\D/g, "").slice(0, 6))
+                }
+                placeholder="Digite novamente"
+              />
+            </FormField>
+            {erroPin && <Alert type="error">{erroPin}</Alert>}
+            {sucessoPin && <Alert type="success">PIN atualizado com sucesso!</Alert>}
+            <Button variant="primary" fullWidth loading={salvandoPin} formAction="submit">
+              {salvandoPin ? "Salvando..." : "Salvar novo PIN"}
+            </Button>
+          </SpaceBetween>
+        </form>
+      </Container>
 
       {/* ── Trocar número de WhatsApp ──────────────────────── */}
-      <form
-        onSubmit={handleSalvarWhatsapp}
-        className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3"
-      >
-        <p className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-          📱 Trocar número de WhatsApp
-        </p>
-        <p className="text-xs text-gray-500">
-          É para este número que as mensagens de pedido dos clientes são enviadas.
-        </p>
-
-        <div>
-          <label className="block text-xs text-gray-500 mb-1">Novo número (com DDD)</label>
-          <input
-            type="tel"
-            value={novoWhatsapp}
-            onChange={(e) => setNovoWhatsapp(e.target.value)}
-            placeholder="Ex: (16) 99999-9999"
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-verde-300"
-          />
-        </div>
-
-        {erroWhatsapp && <p className="text-xs text-red-500">{erroWhatsapp}</p>}
-        {sucessoWhatsapp && (
-          <p className="text-xs text-verde-600">Número de WhatsApp atualizado com sucesso!</p>
-        )}
-
-        <button
-          type="submit"
-          disabled={salvandoWhatsapp}
-          className="w-full py-2 rounded-lg bg-verde-600 hover:bg-verde-700 text-white text-sm font-semibold transition-colors disabled:opacity-60"
-        >
-          {salvandoWhatsapp ? "Salvando..." : "Salvar novo número"}
-        </button>
-      </form>
-    </div>
+      <Container header={<Header variant="h3">📱 Trocar número de WhatsApp</Header>}>
+        <form onSubmit={handleSalvarWhatsapp}>
+          <SpaceBetween size="s">
+            <Box color="text-body-secondary" fontSize="body-s">
+              É para este número que as mensagens de pedido dos clientes são enviadas.
+            </Box>
+            <FormField label="Novo número (com DDD)">
+              <Input
+                inputMode="tel"
+                value={novoWhatsapp}
+                onChange={({ detail }) => setNovoWhatsapp(detail.value)}
+                placeholder="Ex: (16) 99999-9999"
+              />
+            </FormField>
+            {erroWhatsapp && <Alert type="error">{erroWhatsapp}</Alert>}
+            {sucessoWhatsapp && (
+              <Alert type="success">Número de WhatsApp atualizado com sucesso!</Alert>
+            )}
+            <Button variant="primary" fullWidth loading={salvandoWhatsapp} formAction="submit">
+              {salvandoWhatsapp ? "Salvando..." : "Salvar novo número"}
+            </Button>
+          </SpaceBetween>
+        </form>
+      </Container>
+    </SpaceBetween>
   );
 }

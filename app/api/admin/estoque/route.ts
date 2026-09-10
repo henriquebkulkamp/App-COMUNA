@@ -8,7 +8,7 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from "next/server";
-import { atualizarQuantidadeNaPlanilha, invalidarCacheProdutos } from "@/lib/google-sheets";
+import { atualizarQuantidadeNaPlanilha, invalidarCacheProdutos } from "@/lib/db";
 
 export async function PATCH(request: NextRequest) {
   try {

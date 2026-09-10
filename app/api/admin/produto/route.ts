@@ -8,7 +8,7 @@ import {
   adicionarProdutoNaPlanilha,
   removerProdutoDaPlanilha,
   invalidarCacheProdutos,
-} from "@/lib/google-sheets";
+} from "@/lib/db";
 import type { Categoria } from "@/lib/types";
 
 const CATEGORIAS_VALIDAS: Categoria[] = [

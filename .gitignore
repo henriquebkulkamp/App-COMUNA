@@ -21,3 +21,17 @@ Thumbs.db
 
 # Debug
 npm-debug.log*
+
+# Playwright (e2e)
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# Claude Code — plugins/skills instalados automaticamente (ex: "impeccable")
+# não são código do projeto, não deveriam ir pro histórico.
+.claude/agents/
+.claude/skills/
+.github/agents/
+.github/skills/
+.github/hooks/

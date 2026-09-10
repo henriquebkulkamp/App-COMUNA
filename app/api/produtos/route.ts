@@ -11,7 +11,7 @@
 // ============================================================
 
 import { NextResponse } from "next/server";
-import { buscarProdutosDaPlanilha } from "@/lib/google-sheets";
+import { buscarProdutosDaPlanilha } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
