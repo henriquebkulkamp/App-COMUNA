@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
+import Icon from "@cloudscape-design/components/icon";
 import SpaceBetween from "@cloudscape-design/components/space-between";
-import { spaceScaledM, spaceScaledXl } from "@cloudscape-design/design-tokens";
+import { spaceScaledM, spaceScaledXl, spaceScaledXs } from "@cloudscape-design/design-tokens";
 import Header from "@/components/shared/Header";
 import Carrinho from "@/components/shared/Carrinho";
 
@@ -23,7 +24,12 @@ export default function PaginaCarrinho() {
         }}
       >
         <SpaceBetween size="l">
-          <Link to="/">← Continuar comprando</Link>
+          <Link
+            to="/"
+            style={{ display: "inline-flex", alignItems: "center", gap: spaceScaledXs, textDecoration: "none" }}
+          >
+            <Icon name="arrow-left" /> Continuar comprando
+          </Link>
 
           <Carrinho />
         </SpaceBetween>

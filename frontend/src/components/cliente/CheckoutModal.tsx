@@ -223,8 +223,8 @@ _Disponibilidade sujeita a confirmação no momento da separação._`;
               />
             </FormField>
 
-            <Button variant="primary" fullWidth formAction="submit">
-              Revisar Pedido →
+            <Button variant="primary" fullWidth formAction="submit" iconName="arrow-right" iconAlign="right">
+              Revisar Pedido
             </Button>
           </SpaceBetween>
         </form>
@@ -290,7 +290,7 @@ _Disponibilidade sujeita a confirmação no momento da separação._`;
           </Alert>
 
           <SpaceBetween direction="horizontal" size="xs">
-            <Button onClick={() => setEtapa("formulario")}>← Voltar</Button>
+            <Button onClick={() => setEtapa("formulario")} iconName="arrow-left">Voltar</Button>
             <Button onClick={enviarWhatsApp} disabled={salvandoPedido} variant="primary" iconName="send">
               {salvandoPedido ? "Registrando pedido..." : "Enviar via WhatsApp"}
             </Button>
