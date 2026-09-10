@@ -1,0 +1,15 @@
+node_modules/
+dist/
+dist-ssr/
+.env
+*.local
+*.tsbuildinfo
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
