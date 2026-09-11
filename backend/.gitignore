@@ -3,3 +3,12 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+.pytest_cache/
+
+# mutmut — mutants/ é uma cópia inteira do código-fonte gerada a cada
+# rodada (grande, 100% derivada), .mutmut-cache tem resultado por
+# mutante. testar-mutacao.sh já limpa os dois antes de cada rodada —
+# ver o comentário lá sobre por que (cache incremental não confiável).
+mutants/
+.mutmut-cache
+relatorio-mutacao.html

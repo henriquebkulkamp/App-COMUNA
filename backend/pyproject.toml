@@ -1,0 +1,30 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+# Deixa `from app.xxx import yyy` funcionar não importa de onde/como o
+# pytest é chamado (cwd na raiz do repo, dentro de backend/, via
+# `python -m pytest`, IDE...) — "." aqui é relativo a este arquivo
+# (backend/pyproject.toml), então sempre aponta pra backend/.
+pythonpath = ["."]
+
+[tool.mutmut]
+# app/config.py acha o .env por caminho relativo a __file__ — dentro
+# de mutants/ isso resolveria pra mutants/.env (que não existe) sem
+# copiar o .env de verdade junto (mutmut já copia tests/, pyproject.toml
+# etc por padrão; .env não está nessa lista default).
+also_copy = [".env"]
+# Só app/ é mutado — alembic/ (migrations, não exercitadas por pytest,
+# todo mutante ali "sobrevive" só por falta de teste) e tests/ ficam de
+# fora por não estarem listados aqui.
+source_paths = ["app"]
+pytest_add_cli_args_test_selection = ["tests"]
+# main.py é majoritariamente wiring (registro de routers, CORS). A
+# única lógica de verdade lá (semear_admin_padrao) fica de fora da
+# suite de propósito: ela usa o SessionLocal global, ligado ao banco
+# de PRODUÇÃO (não ao banco de teste) — testar isso exigiria trocar
+# esse binding global, o que arrisca vazar pro banco real. Fica como
+# débito conhecido, não coberto.
+do_not_mutate = ["app/main.py"]
+# Linhas de log não geram mutante útil (trocar a mensagem de log não
+# quebra nenhum teste nem é um bug de verdade).
+do_not_mutate_patterns = ['logger\.\w+\(.*\)']

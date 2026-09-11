@@ -13,7 +13,8 @@
     "db:seed": "node db/seed.mjs",
     "db:setup": "npm run db:up && node db/aguardar-postgres.mjs && npm run db:migrate && npm run db:seed",
     "test:e2e": "playwright test",
-    "test:lighthouse": "lhci autorun"
+    "test:lighthouse": "lhci autorun",
+    "test:mutation:backend": "backend/testar-mutacao.sh"
   },
   "dependencies": {
     "@cloudscape-design/components": "^3.0.1358",

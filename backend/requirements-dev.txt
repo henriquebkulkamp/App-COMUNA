@@ -1,0 +1,11 @@
+# ============================================================
+# Dependências só de desenvolvimento/teste — nunca instaladas em
+# produção (requirements.txt continua sendo só o runtime real).
+# pytest + pytest-asyncio + httpx pra rodar a suite; mutmut por cima
+# dela pra mutation testing (ver backend/testar-mutacao.sh).
+# ============================================================
+pytest==9.1.1
+pytest-asyncio==1.4.0
+pytest-cov==7.1.0
+httpx==0.28.1
+mutmut==3.7.0
