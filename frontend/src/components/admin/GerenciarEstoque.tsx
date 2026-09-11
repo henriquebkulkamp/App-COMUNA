@@ -12,6 +12,7 @@ import { formatarPreco } from "@/lib/formatadores";
 import AdicionarProduto from "./AdicionarProduto";
 import type { Categoria, Produto } from "@/lib/types";
 import { apiFetch } from "@/lib/api";
+import Icone from "@/icons/Icone";
 
 const CATEGORIAS: Categoria[] = [
   "Frutas",
@@ -68,7 +69,7 @@ function BotaoRemover({
     <Button
       onClick={() => setConfirmando(true)}
       variant="icon"
-      iconName="remove"
+      iconSvg={<Icone nome="remove" tamanho={16} />}
       ariaLabel={`Remover ${produto.nome}`}
     />
   );
@@ -234,7 +235,11 @@ export default function GerenciarEstoque() {
         ))}
       </div>
 
-      <Button onClick={() => setMostrarAdicionarProduto(true)} iconName="add-plus" fullWidth>
+      <Button
+        onClick={() => setMostrarAdicionarProduto(true)}
+        iconSvg={<Icone nome="add-plus" tamanho={16} />}
+        fullWidth
+      >
         Adicionar Novo Produto
       </Button>
 

@@ -3,7 +3,6 @@ import Modal from "@cloudscape-design/components/modal";
 import Box from "@cloudscape-design/components/box";
 import Button from "@cloudscape-design/components/button";
 import FormField from "@cloudscape-design/components/form-field";
-import Icon from "@cloudscape-design/components/icon";
 import Input from "@cloudscape-design/components/input";
 import Textarea from "@cloudscape-design/components/textarea";
 import RadioGroup from "@cloudscape-design/components/radio-group";
@@ -174,7 +173,7 @@ _Disponibilidade sujeita a confirmação no momento da separação._`;
                     value: "retirada",
                     label: (
                       <SpaceBetween direction="horizontal" size="xs" alignItems="center">
-                        <Icon name="location-pin" /> Retirada
+                        <Icone nome="location-pin" tamanho={16} /> Retirada
                       </SpaceBetween>
                     ),
                     description: ENDERECO_RETIRADA,
@@ -223,7 +222,13 @@ _Disponibilidade sujeita a confirmação no momento da separação._`;
               />
             </FormField>
 
-            <Button variant="primary" fullWidth formAction="submit" iconName="arrow-right" iconAlign="right">
+            <Button
+              variant="primary"
+              fullWidth
+              formAction="submit"
+              iconSvg={<Icone nome="arrow-right" tamanho={16} />}
+              iconAlign="right"
+            >
               Revisar Pedido
             </Button>
           </SpaceBetween>
@@ -236,18 +241,18 @@ _Disponibilidade sujeita a confirmação no momento da separação._`;
             <SpaceBetween size="xs">
               <Box>
                 <SpaceBetween direction="horizontal" size="xs" alignItems="center">
-                  <Icon name="user-profile" /> {dados.nome}
+                  <Icone nome="user-profile" tamanho={16} /> {dados.nome}
                 </SpaceBetween>
               </Box>
               <Box>
                 <SpaceBetween direction="horizontal" size="xs" alignItems="center">
-                  <Icon name="call" /> {dados.celular}
+                  <Icone nome="call" tamanho={16} /> {dados.celular}
                 </SpaceBetween>
               </Box>
               <Box>
                 <SpaceBetween direction="horizontal" size="xs" alignItems="center">
                   {dados.tipoEntrega === "retirada" ? (
-                    <Icon name="location-pin" />
+                    <Icone nome="location-pin" tamanho={16} />
                   ) : (
                     <Icone nome="caminhao" />
                   )}
@@ -290,8 +295,15 @@ _Disponibilidade sujeita a confirmação no momento da separação._`;
           </Alert>
 
           <SpaceBetween direction="horizontal" size="xs">
-            <Button onClick={() => setEtapa("formulario")} iconName="arrow-left">Voltar</Button>
-            <Button onClick={enviarWhatsApp} disabled={salvandoPedido} variant="primary" iconName="send">
+            <Button onClick={() => setEtapa("formulario")} iconSvg={<Icone nome="arrow-left" tamanho={16} />}>
+              Voltar
+            </Button>
+            <Button
+              onClick={enviarWhatsApp}
+              disabled={salvandoPedido}
+              variant="primary"
+              iconSvg={<Icone nome="send" tamanho={16} />}
+            >
               {salvandoPedido ? "Registrando pedido..." : "Enviar via WhatsApp"}
             </Button>
           </SpaceBetween>

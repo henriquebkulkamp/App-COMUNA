@@ -71,7 +71,7 @@ export default function Carrinho() {
                   <Button
                     onClick={() => diminuir(item.produto.id)}
                     ariaLabel="Diminuir quantidade"
-                    iconName="subtract-minus"
+                    iconSvg={<Icone nome="subtract-minus" tamanho={16} />}
                   />
                   <Box textAlign="center" fontWeight="bold" fontSize="body-s">
                     {item.quantidade}
@@ -79,7 +79,7 @@ export default function Carrinho() {
                   <Button
                     onClick={() => aumentar(item.produto.id)}
                     ariaLabel="Aumentar quantidade"
-                    iconName="add-plus"
+                    iconSvg={<Icone nome="add-plus" tamanho={16} />}
                   />
                 </SpaceBetween>
 

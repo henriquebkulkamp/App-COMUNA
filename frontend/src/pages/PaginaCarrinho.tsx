@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
-import Icon from "@cloudscape-design/components/icon";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { spaceScaledM, spaceScaledXl, spaceScaledXs } from "@cloudscape-design/design-tokens";
 import Header from "@/components/shared/Header";
 import Carrinho from "@/components/shared/Carrinho";
+import Icone from "@/icons/Icone";
 
 // Mesmo tom de fundo usado nas outras páginas do cliente (ver
 // PaginaPrincipal.tsx, que replica o mesmo valor).
@@ -27,7 +27,7 @@ export default function PaginaCarrinho() {
             to="/"
             style={{ display: "inline-flex", alignItems: "center", gap: spaceScaledXs, textDecoration: "none" }}
           >
-            <Icon name="arrow-left" /> Continuar comprando
+            <Icone nome="arrow-left" tamanho={16} /> Continuar comprando
           </Link>
 
           <Carrinho />

@@ -4,10 +4,10 @@ import Button from "@cloudscape-design/components/button";
 import Container from "@cloudscape-design/components/container";
 import FormField from "@cloudscape-design/components/form-field";
 import Header from "@cloudscape-design/components/header";
-import Icon from "@cloudscape-design/components/icon";
 import Input from "@cloudscape-design/components/input";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { apiFetch, TOKEN_STORAGE_KEY } from "@/lib/api";
+import Icone from "@/icons/Icone";
 
 // Mesmo tom de fundo das outras páginas do cliente (ver PaginaPrincipal.tsx).
 const FUNDO_PAGINA = "#f0f0e8";
@@ -97,7 +97,7 @@ export default function PaginaLogin() {
               description="Painel da Elizete — COMUNA"
             >
               <SpaceBetween direction="horizontal" size="xs" alignItems="center">
-                <Icon name="lock-private" /> Login administrativo
+                <Icone nome="lock-private" /> Login administrativo
               </SpaceBetween>
             </Header>
           }
@@ -128,7 +128,7 @@ export default function PaginaLogin() {
                 variant="link"
                 fullWidth
                 formAction="none"
-                iconName="arrow-left"
+                iconSvg={<Icone nome="arrow-left" tamanho={16} />}
                 onClick={() => navigate(destino)}
               >
                 Cancelar

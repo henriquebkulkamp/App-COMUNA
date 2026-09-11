@@ -10,6 +10,7 @@ import {
   colorTextAccent,
   colorBorderDividerDefault,
 } from "@cloudscape-design/design-tokens";
+import Icone from "@/icons/Icone";
 
 interface CarrosselProps<T> {
   /** Título mostrado no cabeçalho do carrossel. */
@@ -136,13 +137,13 @@ export default function Carrossel<T>({ titulo, itens, chave, renderItem, id }: C
               <div style={{ display: "flex", gap: spaceScaledXs }}>
                 <Button
                   variant="icon"
-                  iconName="angle-left"
+                  iconSvg={<Icone nome="angle-left" tamanho={16} />}
                   ariaLabel="Ver anteriores"
                   onClick={anterior}
                 />
                 <Button
                   variant="icon"
-                  iconName="angle-right"
+                  iconSvg={<Icone nome="angle-right" tamanho={16} />}
                   ariaLabel="Ver próximos"
                   onClick={proximo}
                 />

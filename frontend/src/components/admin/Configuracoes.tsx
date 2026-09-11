@@ -3,12 +3,12 @@ import Container from "@cloudscape-design/components/container";
 import Header from "@cloudscape-design/components/header";
 import Box from "@cloudscape-design/components/box";
 import FormField from "@cloudscape-design/components/form-field";
-import Icon from "@cloudscape-design/components/icon";
 import Input from "@cloudscape-design/components/input";
 import Button from "@cloudscape-design/components/button";
 import Alert from "@cloudscape-design/components/alert";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import { apiFetch } from "@/lib/api";
+import Icone from "@/icons/Icone";
 
 // ============================================================
 // Configuracoes — Painel para Elizete trocar o número de WhatsApp
@@ -69,7 +69,7 @@ export default function Configuracoes() {
         header={
           <Header variant="h3">
             <SpaceBetween direction="horizontal" size="xs" alignItems="center">
-              <Icon name="call" /> Trocar número de WhatsApp
+              <Icone nome="call" /> Trocar número de WhatsApp
             </SpaceBetween>
           </Header>
         }

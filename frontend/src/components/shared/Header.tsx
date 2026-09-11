@@ -18,7 +18,6 @@ import {
 import { useCarrinho } from "@/lib/carrinho-context";
 import { TOKEN_STORAGE_KEY } from "@/lib/api";
 import Icone from "@/icons/Icone";
-import IconeSvgCarrinho from "@/icons/IconeSvgCarrinho";
 
 interface HeaderProps {
   mostrarCarrinho?: boolean;
@@ -152,7 +151,7 @@ export default function Header({
                 }}
                 variant="normal"
                 ariaLabel="Ver carrinho"
-                iconSvg={<IconeSvgCarrinho />}
+                iconSvg={<Icone nome="carrinho" tamanho={16} />}
               />
               {totalItens > 0 && (
                 <span

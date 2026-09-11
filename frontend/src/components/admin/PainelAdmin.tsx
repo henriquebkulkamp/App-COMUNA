@@ -2,7 +2,6 @@ import { useState, lazy, Suspense } from "react";
 import Container from "@cloudscape-design/components/container";
 import Box from "@cloudscape-design/components/box";
 import Button from "@cloudscape-design/components/button";
-import Icon from "@cloudscape-design/components/icon";
 import SpaceBetween from "@cloudscape-design/components/space-between";
 import {
   colorBackgroundLayoutMain,
@@ -58,7 +57,7 @@ export default function PainelAdmin({ onSair }: PainelAdminProps) {
           <SpaceBetween size="l">
             <Container>
               <div style={{ display: "flex", alignItems: "center", gap: spaceScaledS }}>
-                <Icon name="user-profile" size="large" />
+                <Icone nome="user-profile" tamanho={48} />
                 <div style={{ flex: 1 }}>
                   <Box fontWeight="bold">Olá, Elizete!</Box>
                   <Box color="text-body-secondary" fontSize="body-s">
@@ -99,7 +98,7 @@ export default function PainelAdmin({ onSair }: PainelAdminProps) {
                       id: "config",
                       label: (
                         <SpaceBetween direction="horizontal" size="xs" alignItems="center">
-                          <Icon name="settings" /> Configurações
+                          <Icone nome="settings" /> Configurações
                         </SpaceBetween>
                       ),
                       content: <Configuracoes />,
