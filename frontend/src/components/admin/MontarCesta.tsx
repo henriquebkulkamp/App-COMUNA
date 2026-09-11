@@ -146,7 +146,7 @@ export default function MontarCesta() {
             <SpaceBetween size="s">
               <Box fontWeight="bold">
                 <SpaceBetween direction="horizontal" size="xs" alignItems="center">
-                  <Icone nome="cesta" /> Cesta Grande
+                  <Icone nome="cesta" /><span>Cesta Grande</span>
                 </SpaceBetween>
               </Box>
               <div style={{ display: "flex", alignItems: "center", gap: spaceScaledXs }}>
@@ -192,7 +192,7 @@ export default function MontarCesta() {
             <SpaceBetween size="s">
               <Box fontWeight="bold">
                 <SpaceBetween direction="horizontal" size="xs" alignItems="center">
-                  <Icone nome="cesta" /> Cesta Pequena
+                  <Icone nome="cesta" /><span>Cesta Pequena</span>
                 </SpaceBetween>
               </Box>
               <div style={{ display: "flex", alignItems: "center", gap: spaceScaledXs }}>

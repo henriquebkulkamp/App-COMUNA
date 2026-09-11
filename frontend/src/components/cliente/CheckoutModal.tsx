@@ -173,7 +173,7 @@ _Disponibilidade sujeita a confirmação no momento da separação._`;
                     value: "retirada",
                     label: (
                       <SpaceBetween direction="horizontal" size="xs" alignItems="center">
-                        <Icone nome="location-pin" tamanho={16} /> Retirada
+                        <Icone nome="location-pin" tamanho={16} /><span>Retirada</span>
                       </SpaceBetween>
                     ),
                     description: ENDERECO_RETIRADA,
@@ -182,7 +182,7 @@ _Disponibilidade sujeita a confirmação no momento da separação._`;
                     value: "entrega",
                     label: (
                       <SpaceBetween direction="horizontal" size="xs" alignItems="center">
-                        <Icone nome="caminhao" /> Entrega
+                        <Icone nome="caminhao" /><span>Entrega</span>
                       </SpaceBetween>
                     ),
                     description: "Via COMUNA",
@@ -241,12 +241,12 @@ _Disponibilidade sujeita a confirmação no momento da separação._`;
             <SpaceBetween size="xs">
               <Box>
                 <SpaceBetween direction="horizontal" size="xs" alignItems="center">
-                  <Icone nome="user-profile" tamanho={16} /> {dados.nome}
+                  <Icone nome="user-profile" tamanho={16} /><span>{dados.nome}</span>
                 </SpaceBetween>
               </Box>
               <Box>
                 <SpaceBetween direction="horizontal" size="xs" alignItems="center">
-                  <Icone nome="call" tamanho={16} /> {dados.celular}
+                  <Icone nome="call" tamanho={16} /><span>{dados.celular}</span>
                 </SpaceBetween>
               </Box>
               <Box>
@@ -256,9 +256,11 @@ _Disponibilidade sujeita a confirmação no momento da separação._`;
                   ) : (
                     <Icone nome="caminhao" />
                   )}
-                  {dados.tipoEntrega === "retirada"
-                    ? `Retirada — ${ENDERECO_RETIRADA}`
-                    : `Entrega — ${dados.enderecoEntrega}`}
+                  <span>
+                    {dados.tipoEntrega === "retirada"
+                      ? `Retirada — ${ENDERECO_RETIRADA}`
+                      : `Entrega — ${dados.enderecoEntrega}`}
+                  </span>
                 </SpaceBetween>
               </Box>
             </SpaceBetween>

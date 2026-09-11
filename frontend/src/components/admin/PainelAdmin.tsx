@@ -80,7 +80,7 @@ export default function PainelAdmin({ onSair }: PainelAdminProps) {
                       id: "cesta",
                       label: (
                         <SpaceBetween direction="horizontal" size="xs" alignItems="center">
-                          <Icone nome="cesta" /> Montar Cesta da Semana
+                          <Icone nome="cesta" /><span>Montar Cesta da Semana</span>
                         </SpaceBetween>
                       ),
                       content: <MontarCesta />,
@@ -89,7 +89,7 @@ export default function PainelAdmin({ onSair }: PainelAdminProps) {
                       id: "estoque",
                       label: (
                         <SpaceBetween direction="horizontal" size="xs" alignItems="center">
-                          <Icone nome="caixa" /> Gerenciar Estoque
+                          <Icone nome="caixa" /><span>Gerenciar Estoque</span>
                         </SpaceBetween>
                       ),
                       content: <GerenciarEstoque />,
@@ -98,7 +98,7 @@ export default function PainelAdmin({ onSair }: PainelAdminProps) {
                       id: "config",
                       label: (
                         <SpaceBetween direction="horizontal" size="xs" alignItems="center">
-                          <Icone nome="settings" /> Configurações
+                          <Icone nome="settings" /><span>Configurações</span>
                         </SpaceBetween>
                       ),
                       content: <Configuracoes />,

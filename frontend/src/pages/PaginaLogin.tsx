@@ -97,7 +97,7 @@ export default function PaginaLogin() {
               description="Painel da Elizete — COMUNA"
             >
               <SpaceBetween direction="horizontal" size="xs" alignItems="center">
-                <Icone nome="lock-private" /> Login administrativo
+                <Icone nome="lock-private" /><span>Login administrativo</span>
               </SpaceBetween>
             </Header>
           }

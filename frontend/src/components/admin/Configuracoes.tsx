@@ -69,7 +69,7 @@ export default function Configuracoes() {
         header={
           <Header variant="h3">
             <SpaceBetween direction="horizontal" size="xs" alignItems="center">
-              <Icone nome="call" /> Trocar número de WhatsApp
+              <Icone nome="call" /><span>Trocar número de WhatsApp</span>
             </SpaceBetween>
           </Header>
         }

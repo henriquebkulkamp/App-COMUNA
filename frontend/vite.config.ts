@@ -13,4 +13,28 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Só React/react-dom/react-router-dom aqui — usados sem
+        // condição em toda página, então agrupar não quebra nenhum
+        // lazy loading. Separar em vendor chunk não reduz bytes totais,
+        // mas separa código que quase não muda (React) do código do
+        // app (que muda a cada deploy) — o navegador reaproveita o
+        // cache do vendor entre deploys em vez de rebaixar tudo de novo.
+        //
+        // NÃO incluir @cloudscape-design/components aqui: boa parte
+        // dele (Table, Tabs, ColumnLayout...) só é usada nas telas
+        // admin-only, importadas via React.lazy() de propósito (ver
+        // PainelAdmin.tsx) pra não entrar no bundle de quem visita só
+        // como cliente. Forçar tudo do Cloudscape num chunk manual
+        // único ignora essa fronteira de import dinâmico e faz esse
+        // CSS/JS admin-only carregar pra todo mundo — testado e
+        // revertido (~600KB de CSS a mais pra clientes comuns).
+        manualChunks: {
+          "vendor-react": ["react", "react-dom", "react-router-dom"],
+        },
+      },
+    },
+  },
 });

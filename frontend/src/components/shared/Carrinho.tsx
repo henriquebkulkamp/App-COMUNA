@@ -29,8 +29,7 @@ export default function Carrinho() {
     <Container>
       <Box variant="h1" padding={{ bottom: "m" }}>
         <SpaceBetween direction="horizontal" size="xs" alignItems="center">
-          <Icone nome="carrinho" tamanho={24} />
-          Seu Carrinho{totalItens > 0 ? ` (${totalItens})` : ""}
+          <Icone nome="carrinho" tamanho={24} /><span>Seu Carrinho{totalItens > 0 ? ` (${totalItens})` : ""}</span>
         </SpaceBetween>
       </Box>
 

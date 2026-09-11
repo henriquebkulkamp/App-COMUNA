@@ -47,7 +47,7 @@ function CartaoCesta({ titulo, produto, itens }: CartaoCestaProps) {
           actions={<Preco valor={produto.preco} valorComDesconto={produto.precoReal} tamanho="grande" />}
         >
           <SpaceBetween direction="horizontal" size="xs" alignItems="center">
-            <Icone nome="cesta" /> {titulo}
+            <Icone nome="cesta" /><span>{titulo}</span>
           </SpaceBetween>
         </Header>
       }
@@ -148,7 +148,7 @@ export default function CestaDaSemana({
           header={
             <Header variant="h1">
               <SpaceBetween direction="horizontal" size="xs" alignItems="center">
-                <Icone nome="cesta" /> Cesta da Semana
+                <Icone nome="cesta" /><span>Cesta da Semana</span>
               </SpaceBetween>
             </Header>
           }
@@ -179,7 +179,7 @@ export default function CestaDaSemana({
             description="Selecionada com carinho pela COMUNA. A composição pode variar conforme a oferta dos produtores."
           >
             <SpaceBetween direction="horizontal" size="xs" alignItems="center">
-              <Icone nome="cesta" /> Cesta da Semana
+              <Icone nome="cesta" /><span>Cesta da Semana</span>
             </SpaceBetween>
           </Header>
         }

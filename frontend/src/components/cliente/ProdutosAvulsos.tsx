@@ -86,7 +86,7 @@ export default function ProdutosAvulsos({ produtosEmEstoque }: ProdutosAvulsosPr
           }
         >
           <SpaceBetween direction="horizontal" size="xs" alignItems="center">
-            <Icone nome="carrinho" /> Produtos Avulsos
+            <Icone nome="carrinho" /><span>Produtos Avulsos</span>
           </SpaceBetween>
         </Header>
       }
