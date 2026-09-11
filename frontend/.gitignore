@@ -13,3 +13,11 @@ dist-ssr/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Playwright — saída transiente de cada rodada. Os baselines de
+# verdade (e2e/visual/**/*-snapshots/*.png) NÃO entram aqui, são
+# versionados de propósito — é contra eles que o diff é comparado.
+test-results/
+playwright-report/
+blob-report/
+e2e/visual/relatorio.html

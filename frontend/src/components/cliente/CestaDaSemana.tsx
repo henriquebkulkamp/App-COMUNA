@@ -141,7 +141,7 @@ export default function CestaDaSemana({
 
   if (!temCestaGrande && !temCestaPequena) {
     return (
-      <div style={{ height: ALTURA_SECAO, minHeight: ALTURA_MINIMA_SECAO }}>
+      <div id="cesta-da-semana" style={{ height: ALTURA_SECAO, minHeight: ALTURA_MINIMA_SECAO }}>
         <Container
           style={estiloSecao}
           fitHeight
@@ -169,7 +169,7 @@ export default function CestaDaSemana({
   }
 
   return (
-    <div style={{ height: ALTURA_SECAO, minHeight: ALTURA_MINIMA_SECAO }}>
+    <div id="cesta-da-semana" style={{ height: ALTURA_SECAO, minHeight: ALTURA_MINIMA_SECAO }}>
       <Container
         style={estiloSecao}
         fitHeight
