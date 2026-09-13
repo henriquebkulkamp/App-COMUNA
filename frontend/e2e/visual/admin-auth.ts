@@ -9,8 +9,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // ============================================================
 // Lê ADMIN_EMAIL/ADMIN_SENHA de ../../../backend/.env (não
 // hardcoded aqui — esse arquivo é versionado, o .env não é) e faz o
-// login de verdade pela UI (POST /api/admin/login contra o backend
-// de teste). Usado só pelo teste visual do painel admin
+// login de verdade pela UI (POST /api/auth/login contra o backend de
+// teste — login não é mais rota exclusiva de admin, ver
+// app/routers/auth.py). Usado só pelo teste visual do painel admin
 // (admin.visual.spec.ts) — o mesmo par email/senha que
 // `npm run db:seed` (raiz) configura como administradora.
 // ============================================================
@@ -38,11 +39,15 @@ function lerCredenciaisAdmin(): { email: string; senha: string } {
 export async function logarComoAdmin(page: Page): Promise<void> {
   const { email, senha } = lerCredenciaisAdmin();
 
-  await page.goto("/login");
+  // Entra por /admin (não /login direto): sem sessão, PaginaAdmin.tsx
+  // redireciona pra /login guardando `from: { pathname: "/admin" }` —
+  // é esse "from" que faz o login devolver pra cá depois. Login
+  // direto (sem "from") manda pra "/" agora, já que não é mais
+  // exclusivo de admin (ver PaginaLogin.tsx::lerOrigem).
+  await page.goto("/admin");
   await page.getByPlaceholder("seu@email.com").fill(email);
   await page.getByPlaceholder("Digite a senha").fill(senha);
   await page.getByRole("button", { name: "Login" }).click();
 
-  // Login bem-sucedido navega pra fora de /login (destino padrão: /admin).
-  await page.waitForURL((url) => !url.pathname.startsWith("/login"));
+  await page.waitForURL((url) => url.pathname === "/admin");
 }

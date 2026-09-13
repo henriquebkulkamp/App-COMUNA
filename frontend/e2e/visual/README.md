@@ -12,9 +12,17 @@ a tolerância configurada (`maxDiffPixelRatio: 0.02` em
 `frontend/`). Esse script:
 
 1. Roda o Playwright por baixo dos panos.
-2. Pra cada tela que mudou, junta as 3 imagens (esperado / capturado
-   agora / diff com os pixels destacados) e a contagem exata de
-   pixels diferentes.
+2. Pra cada tela que mudou, junta 3 imagens — **Antes**, **Depois** e
+   um **heatmap do delta** (diferença pixel a pixel calculada aqui,
+   mas o espalhamento/borrão é feito por uma lib de heatmap de
+   verdade — `simpleheat`, a mesma técnica de heatmap de clique/
+   densidade tipo Leaflet.heat, rodando sobre canvas nativo via
+   `@napi-rs/canvas` — não é o diff padrão do Playwright: fundo todo
+   preto, quanto mais um pixel mudou de cor, mais azul/branco fica,
+   ver `heatmap.mjs`) — e a legenda da terceira já traz a contagem
+   exata (`Delta: N px (X%)`).
+   Clicar em qualquer uma das três abre em tela cheia, com setas/`←``→`
+   pra navegar entre TODAS as imagens do relatório.
 3. Escreve TUDO isso num arquivo HTML único e estático —
    `e2e/visual/relatorio.html` (imagens embutidas em base64, sem
    precisar de servidor: abre com duplo clique em qualquer navegador).
@@ -22,9 +30,10 @@ a tolerância configurada (`maxDiffPixelRatio: 0.02` em
    achou diferença) — é isso que o hook usa pra decidir se bloqueia.
 
 Não tem passo manual nenhum — quem chama esse script (você, ou o
-Claude) só olha a linha que ele imprime no fim
-(`✓ N teste(s) bateram` ou `✗ M/N mudaram — relatório em ...`) e, se
-quiser ver a diferença de verdade, abre o `relatorio.html`.
+Claude) só olha a linha que ele imprime no fim (`✓ Nenhuma tela mudou.`
+ou `✗ N tela(s) mudaram — relatório em ...` — nunca uma fração X/Y, de
+propósito) e, se quiser ver a diferença de verdade, abre o
+`relatorio.html`.
 
 ## Quando isso roda sozinho
 

@@ -3,8 +3,9 @@
 // gerar-relatorio.mjs — roda os testes de diff visual e escreve UM
 // relatório HTML estático (imagens embutidas em base64, sem precisar
 // de servidor nem de `playwright show-report`) em
-// e2e/visual/relatorio.html. Script único, sem dependência nova além
-// do que o Playwright já traz — só Node puro.
+// e2e/visual/relatorio.html. Só uma dependência além do que o
+// Playwright já traz: `pngjs` (decodificar/codificar PNG puro, sem
+// binding nativo), usada pra montar o heatmap do delta (ver abaixo).
 //
 // Uso: node e2e/visual/gerar-relatorio.mjs (ou `npm run test:visual`)
 // Saída: mesmo exit code do Playwright (0 = tudo bateu, 1 = achou
@@ -16,6 +17,7 @@ import { spawnSync, spawn } from "node:child_process";
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { gerarHeatmap } from "./heatmap.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FRONTEND_DIR = path.resolve(__dirname, "../.."); // frontend/
@@ -67,7 +69,6 @@ function coletarEspecs(suites, caminho = []) {
 
 const especs = coletarEspecs(relatorioJson.suites);
 const falhas = especs.filter((e) => !e.ok);
-const sucessos = especs.filter((e) => e.ok);
 
 // ─── 3. Pra cada falha, junta expected/actual/diff (ver o sufixo que
 // o Playwright usa em toHaveScreenshot — addSuffixToFilePath) e extrai
@@ -88,6 +89,11 @@ function extrairContagemPixels(mensagemErro) {
   return { pixels: match[1], ratio: match[2] };
 }
 
+// gerarHeatmap (delta pixel a pixel -> lib de heatmap [simpleheat +
+// canvas nativo] espalha a intensidade -> normaliza 0..1 -> escala
+// preto/azul-escuro/azul-claro/branco) mora em ./heatmap.mjs —
+// testável isolado.
+
 for (const falha of falhas) {
   // addSuffixToFilePath (Playwright) gera nomes tipo
   // "home-header-expected.png" — sufixo antes da extensão, extensão
@@ -100,7 +106,10 @@ for (const falha of falhas) {
   falha.imagens = {
     expected: paraDataUri(porNome.expected),
     actual: paraDataUri(porNome.actual),
-    diff: paraDataUri(porNome.diff),
+    // Heatmap calculado por cima de expected/actual — cai pro diff
+    // padrão do Playwright só se as dimensões não baterem (heatmap
+    // pixel a pixel não faz sentido nesse caso).
+    diff: gerarHeatmap(porNome.expected, porNome.actual) ?? paraDataUri(porNome.diff),
   };
   falha.diffPixels = extrairContagemPixels(falha.erro);
 }
@@ -110,34 +119,37 @@ function escaparHtml(texto) {
   return String(texto).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 }
 
-function blocoFalha(falha) {
-  const pixelsTexto = falha.diffPixels
-    ? `${falha.diffPixels.pixels} pixels diferentes (${(Number(falha.diffPixels.ratio) * 100).toFixed(1)}% da imagem)`
-    : "sem contagem de pixels (erro não é de screenshot — ver mensagem completa abaixo)";
+// Lista achatada de TODAS as imagens do relatório, na ordem em que
+// aparecem na página — o lightbox (ver <script> no fim do HTML)
+// navega por ela com "anterior"/"próxima", não só dentro de uma seção.
+const todasImagens = [];
 
-  const imagem = (rotulo, src) =>
-    src
-      ? `<figure><figcaption>${rotulo}</figcaption><img src="${src}" alt="${rotulo} — ${escaparHtml(falha.titulo)}"></figure>`
-      : "";
+function blocoFalha(falha) {
+  const legendaDelta = falha.diffPixels
+    ? `Delta: ${falha.diffPixels.pixels} px (${(Number(falha.diffPixels.ratio) * 100).toFixed(1)}%)`
+    : "Delta de pixels indisponível — erro não é de screenshot, ver mensagem completa abaixo";
+
+  const imagem = (rotulo, src) => {
+    if (!src) return "";
+    const legenda = `${falha.titulo} — ${rotulo}`;
+    const indice = todasImagens.push({ src, legenda }) - 1;
+    return `<figure><figcaption>${rotulo}</figcaption><img src="${src}" alt="${escaparHtml(legenda)}" data-lightbox-indice="${indice}" tabindex="0"></figure>`;
+  };
 
   return `
     <section class="falha">
       <h3>✗ ${escaparHtml(falha.titulo)}</h3>
-      <p class="meta">${escaparHtml(falha.arquivo)} · ${pixelsTexto}</p>
+      <p class="meta">${escaparHtml(falha.arquivo)}</p>
       <div class="imagens">
-        ${imagem("Esperado (baseline)", falha.imagens.expected)}
-        ${imagem("Capturado agora", falha.imagens.actual)}
-        ${imagem("Diff (pixels que mudaram)", falha.imagens.diff)}
+        ${imagem("Antes", falha.imagens.expected)}
+        ${imagem("Depois", falha.imagens.actual)}
+        ${imagem(legendaDelta, falha.imagens.diff)}
       </div>
       <details>
         <summary>Mensagem de erro completa</summary>
         <pre>${escaparHtml(falha.erro ?? "(sem mensagem)")}</pre>
       </details>
     </section>`;
-}
-
-function linhaSucesso(spec) {
-  return `<li>✓ ${escaparHtml(spec.titulo)} <span class="meta">(${(spec.duracaoMs / 1000).toFixed(1)}s)</span></li>`;
 }
 
 const agora = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
@@ -159,28 +171,114 @@ const html = `<!doctype html>
   .imagens { display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0; }
   .imagens figure { flex: 1 1 260px; margin: 0; }
   .imagens figcaption { font-size: 0.85em; font-weight: 600; margin-bottom: 4px; }
-  .imagens img { max-width: 100%; border: 1px solid #ccc; border-radius: 4px; }
+  .imagens img { max-width: 100%; border: 1px solid #ccc; border-radius: 4px; cursor: zoom-in; }
   pre { white-space: pre-wrap; background: #f5f5f5; padding: 8px; border-radius: 4px; font-size: 0.8em; }
-  ul.sucessos { padding-left: 20px; }
-  ul.sucessos li { margin-bottom: 4px; }
   @media (prefers-color-scheme: dark) {
     body { background: #1a1a1a; color: #eee; }
     pre { background: #2a2a2a; }
     .imagens img { border-color: #444; }
   }
+
+  /* Lightbox — clica numa imagem (Antes/Depois/Delta), abre em tela
+     cheia; seta/clique nas bordas ou ←/→ do teclado troca pra
+     próxima/anterior de TODAS as imagens do relatório, não só as 3
+     da mesma seção. Esc ou clique fora fecha. */
+  /* :not([hidden]) de propósito: "display: flex" sozinho aqui tem a
+     MESMA especificidade do "[hidden] { display: none }" do stylesheet
+     do navegador, e regra de autor sempre vence UA na mesma
+     especificidade — ou seja, sem o :not, esse flex ficava sempre
+     ativo e ocultar via overlay.hidden = true não tinha efeito visual
+     nenhum (o botão de fechar/Esc pareciam não fazer nada). */
+  .lightbox:not([hidden]) {
+    position: fixed; inset: 0; background: rgba(0, 0, 0, 0.9);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000; padding: 16px;
+  }
+  .lightbox img { max-width: 90vw; max-height: 82vh; object-fit: contain; }
+  .lightbox figcaption { color: #fff; text-align: center; margin-top: 12px; font-size: 0.9em; }
+  .lightbox-fechar {
+    position: absolute; top: 16px; right: 20px; background: none; border: none;
+    color: #fff; font-size: 2rem; line-height: 1; cursor: pointer; padding: 4px 10px;
+  }
+  .lightbox-nav {
+    position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255, 255, 255, 0.15);
+    border: none; color: #fff; font-size: 2rem; line-height: 1; width: 56px; height: 56px;
+    border-radius: 9999px; cursor: pointer;
+  }
+  .lightbox-nav:hover { background: rgba(255, 255, 255, 0.3); }
+  .lightbox-anterior { left: 16px; }
+  .lightbox-proxima { right: 16px; }
 </style>
 </head>
 <body>
   <h1>🧪 Relatório de diff visual</h1>
-  <p class="meta">Gerado em ${agora} · ${especs.length} teste(s)</p>
+  <p class="meta">Gerado em ${agora}</p>
 
   <p class="resumo ${falhas.length === 0 ? "tudo-ok" : "tem-falha"}">
-    ${falhas.length === 0 ? `✓ Tudo igual ao baseline — ${sucessos.length} teste(s) passaram.` : `✗ ${falhas.length} tela(s) mudaram visualmente (${sucessos.length} continuam batendo).`}
+    ${falhas.length === 0 ? "✓ Nenhuma tela mudou." : `✗ ${falhas.length} tela(s) mudaram.`}
   </p>
 
   ${falhas.length > 0 ? `<h2>O que mudou</h2>${falhas.map(blocoFalha).join("\n")}` : ""}
 
-  ${sucessos.length > 0 ? `<h2>Sem mudança (${sucessos.length})</h2><ul class="sucessos">${sucessos.map(linhaSucesso).join("\n")}</ul>` : ""}
+  <div id="lightbox" class="lightbox" hidden>
+    <button class="lightbox-fechar" id="lightbox-fechar" aria-label="Fechar" title="Fechar (Esc)">×</button>
+    <button class="lightbox-nav lightbox-anterior" id="lightbox-anterior" aria-label="Imagem anterior" title="Anterior (←)">‹</button>
+    <figure>
+      <img id="lightbox-img" src="" alt="">
+      <figcaption id="lightbox-legenda"></figcaption>
+    </figure>
+    <button class="lightbox-nav lightbox-proxima" id="lightbox-proxima" aria-label="Próxima imagem" title="Próxima (→)">›</button>
+  </div>
+
+  <script>
+    // Todas as imagens do relatório, na ordem em que aparecem —
+    // gerado em gerar-relatorio.mjs (mesmo array que numerou os
+    // data-lightbox-indice de cada <img> acima).
+    const IMAGENS = ${JSON.stringify(todasImagens)};
+
+    const overlay = document.getElementById("lightbox");
+    const imgEl = document.getElementById("lightbox-img");
+    const legendaEl = document.getElementById("lightbox-legenda");
+    let indiceAtual = -1;
+
+    function abrir(indice) {
+      indiceAtual = (indice + IMAGENS.length) % IMAGENS.length;
+      const item = IMAGENS[indiceAtual];
+      imgEl.src = item.src;
+      imgEl.alt = item.legenda;
+      legendaEl.textContent = item.legenda;
+      overlay.hidden = false;
+    }
+
+    function fechar() {
+      overlay.hidden = true;
+      imgEl.src = ""; // solta a memória da imagem em base64 enquanto fechado
+    }
+
+    document.querySelectorAll("img[data-lightbox-indice]").forEach((img) => {
+      const indice = Number(img.dataset.lightboxIndice);
+      img.addEventListener("click", () => abrir(indice));
+      img.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrir(indice); }
+      });
+    });
+
+    document.getElementById("lightbox-fechar").addEventListener("click", fechar);
+    document.getElementById("lightbox-anterior").addEventListener("click", () => abrir(indiceAtual - 1));
+    document.getElementById("lightbox-proxima").addEventListener("click", () => abrir(indiceAtual + 1));
+
+    // Clique fora da imagem/legenda (no fundo escuro) fecha.
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) fechar();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (overlay.hidden) return;
+      if (e.key === "Escape") fechar();
+      else if (e.key === "ArrowLeft") abrir(indiceAtual - 1);
+      else if (e.key === "ArrowRight") abrir(indiceAtual + 1);
+    });
+  </script>
 </body>
 </html>
 `;
@@ -221,7 +319,7 @@ if (falhas.length > 0) abrirNoNavegador(RELATORIO_PATH);
 // ─── 6. Resumo curto no terminal + mesmo exit code do Playwright ──
 console.log(
   falhas.length === 0
-    ? `✓ ${sucessos.length} teste(s) visuais bateram com o baseline.`
-    : `✗ ${falhas.length}/${especs.length} teste(s) visuais mudaram — veja o que mudou em ${path.relative(process.cwd(), RELATORIO_PATH)}`
+    ? "✓ Nenhuma tela mudou."
+    : `✗ ${falhas.length} tela(s) mudaram — veja o que mudou em ${path.relative(process.cwd(), RELATORIO_PATH)}`
 );
 process.exit(resultado.status ?? (falhas.length > 0 ? 1 : 0));
