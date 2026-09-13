@@ -20,9 +20,11 @@ import hmac
 import secrets
 import time
 
-from fastapi import Header, HTTPException
+from fastapi import Depends, Header, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from .config import settings
+from .database import get_session
 
 _ITERACOES_PBKDF2 = 200_000
 TOKEN_TTL_SEGUNDOS = 7 * 24 * 60 * 60  # 7 dias
@@ -75,19 +77,41 @@ def verificar_token(token: str) -> int | None:
         return None
 
 
-async def exigir_admin(authorization: str | None = Header(default=None)) -> int:
+async def exigir_usuario(
+    authorization: str | None = Header(default=None),
+) -> int:
+    """Dependency do FastAPI — só exige estar logado (qualquer conta),
+    sem checar is_admin. Devolve o id do usuário autenticado."""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Não autenticado.")
+    usuario_id = verificar_token(authorization.removeprefix("Bearer "))
+    if usuario_id is None:
+        raise HTTPException(status_code=401, detail="Sessão inválida ou expirada. Faça login novamente.")
+    return usuario_id
+
+
+async def exigir_admin(
+    usuario_id: int = Depends(exigir_usuario),
+    session: AsyncSession = Depends(get_session),
+) -> int:
     """Dependency do FastAPI — protege as rotas de mutação do painel
     admin (estoque, preço, cesta, produto, config). Analogia: um
     decorator @login_required, só que injetado via Depends().
 
-    Substitui o "buraco" que existia antes (rotas de mutação sem
-    nenhuma verificação, só o front-end escondia a UI) — agora exigem
-    um token válido de POST /api/admin/login no header
-    `Authorization: Bearer <token>`.
+    Diferente de antes (quando só existia conta admin, então "ter
+    token válido" já bastava): login agora vale pra qualquer conta
+    (POST /api/auth/login), então aqui é preciso ir no banco checar se
+    ESSA conta específica é admin — não dá pra confiar em nada
+    embutido no token (senão revogar o admin de alguém não teria
+    efeito enquanto o token antigo não expirasse).
     """
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Não autenticado.")
-    admin_id = verificar_token(authorization.removeprefix("Bearer "))
-    if admin_id is None:
-        raise HTTPException(status_code=401, detail="Sessão inválida ou expirada. Faça login novamente.")
-    return admin_id
+    # Import local pra evitar ciclo: models.py não importa auth.py,
+    # mas manter o import aqui deixa claro que é só usado nesta função.
+    from sqlalchemy import select
+
+    from .models import Usuario
+
+    usuario = (await session.execute(select(Usuario).where(Usuario.id == usuario_id))).scalar_one_or_none()
+    if usuario is None or not usuario.is_admin:
+        raise HTTPException(status_code=403, detail="Essa conta não tem acesso ao painel administrativo.")
+    return usuario_id

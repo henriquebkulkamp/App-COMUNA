@@ -1,7 +1,8 @@
 # ============================================================
-# test_auth.py — hash de senha, token de sessão e a dependency
-# exigir_admin (app/auth.py). Lógica pura, sem I/O — o alvo mais
-# limpo pra mutation testing de todo o backend.
+# test_auth.py — hash de senha, token de sessão e as dependencies
+# exigir_usuario (só checa header/token) e exigir_admin (além disso,
+# confere is_admin no banco) — app/auth.py. Lógica pura, sem I/O na
+# maior parte — o alvo mais limpo pra mutation testing do backend.
 # ============================================================
 
 import time
@@ -12,6 +13,7 @@ from fastapi import HTTPException
 from app.auth import (
     _assinar,
     exigir_admin,
+    exigir_usuario,
     gerar_hash_senha,
     gerar_token,
     verificar_senha,
@@ -121,29 +123,29 @@ def test_token_no_ultimo_segundo_valido_ainda_verifica(monkeypatch):
     assert verificar_token(token) == 9
 
 
-# ─── exigir_admin (dependency do FastAPI) ──────────────────────────
+# ─── exigir_usuario (parsing do header — qualquer conta logada) ────
 
 
 @pytest.mark.asyncio
-async def test_exigir_admin_sem_header_levanta_401():
+async def test_exigir_usuario_sem_header_levanta_401():
     with pytest.raises(HTTPException) as excinfo:
-        await exigir_admin(authorization=None)
+        await exigir_usuario(authorization=None)
     assert excinfo.value.status_code == 401
     assert excinfo.value.detail == "Não autenticado."
 
 
 @pytest.mark.asyncio
-async def test_exigir_admin_sem_prefixo_bearer_levanta_401():
+async def test_exigir_usuario_sem_prefixo_bearer_levanta_401():
     with pytest.raises(HTTPException) as excinfo:
-        await exigir_admin(authorization="token-sem-prefixo-bearer")
+        await exigir_usuario(authorization="token-sem-prefixo-bearer")
     assert excinfo.value.status_code == 401
     assert excinfo.value.detail == "Não autenticado."
 
 
 @pytest.mark.asyncio
-async def test_exigir_admin_token_invalido_levanta_401():
+async def test_exigir_usuario_token_invalido_levanta_401():
     with pytest.raises(HTTPException) as excinfo:
-        await exigir_admin(authorization="Bearer token-invalido")
+        await exigir_usuario(authorization="Bearer token-invalido")
     assert excinfo.value.status_code == 401
     # Mensagem diferente da de "sem header" — distingue "nunca logou"
     # de "logou mas a sessão não vale mais".
@@ -151,7 +153,41 @@ async def test_exigir_admin_token_invalido_levanta_401():
 
 
 @pytest.mark.asyncio
-async def test_exigir_admin_token_valido_retorna_admin_id():
+async def test_exigir_usuario_token_valido_retorna_usuario_id():
     token = gerar_token(admin_id=123)
-    admin_id = await exigir_admin(authorization=f"Bearer {token}")
-    assert admin_id == 123
+    usuario_id = await exigir_usuario(authorization=f"Bearer {token}")
+    assert usuario_id == 123
+
+
+# ─── exigir_admin (além do header, checa is_admin no banco) ────────
+
+
+async def test_exigir_admin_conta_admin_retorna_id(session):
+    from app.models import Usuario
+
+    usuario = Usuario(nome="Elizete", email="elizete@comuna.local", senha_hash="x", is_admin=True)
+    session.add(usuario)
+    await session.commit()
+    await session.refresh(usuario)
+
+    usuario_id = await exigir_admin(usuario_id=usuario.id, session=session)
+    assert usuario_id == usuario.id
+
+
+async def test_exigir_admin_conta_nao_admin_levanta_403(session):
+    from app.models import Usuario
+
+    usuario = Usuario(nome="João", email="joao@example.com", senha_hash="x", is_admin=False)
+    session.add(usuario)
+    await session.commit()
+    await session.refresh(usuario)
+
+    with pytest.raises(HTTPException) as excinfo:
+        await exigir_admin(usuario_id=usuario.id, session=session)
+    assert excinfo.value.status_code == 403
+
+
+async def test_exigir_admin_usuario_inexistente_levanta_403(session):
+    with pytest.raises(HTTPException) as excinfo:
+        await exigir_admin(usuario_id=999999, session=session)
+    assert excinfo.value.status_code == 403

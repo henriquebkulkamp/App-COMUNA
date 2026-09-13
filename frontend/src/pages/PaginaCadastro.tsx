@@ -20,12 +20,6 @@ interface EstadoOrigem {
 
 function lerOrigem(state: unknown): string {
   const origem = (state as { from?: EstadoOrigem } | null)?.from;
-  // Sem "from" (ex: clicou em "Login" no Header, sem vir de nenhuma
-  // rota protegida), o destino padrão é a home — login não é mais uma
-  // ação exclusiva de admin, então não faz sentido presumir /admin.
-  // Quem já é admin e quer o painel clica em "Painel Admin" no
-  // Header (aparece assim que loga) — um passo a mais, mas nenhuma
-  // suposição de papel aqui.
   return origem ? `${origem.pathname}${origem.search}` : "/";
 }
 
@@ -38,49 +32,47 @@ function estaAutenticado(): boolean {
 }
 
 // ============================================================
-// PaginaLogin — login de qualquer conta (não é mais exclusivo do
-// painel admin — ver comentário em app/auth.py::exigir_admin sobre a
-// mudança). O botão do Header manda pra cá guardando de onde o clique
-// veio (`location.state.from`) — depois de logar (ou ao cancelar),
-// volta exatamente pra lá.
+// PaginaCadastro — cadastro público de conta (POST /api/auth/cadastro,
+// ver app/routers/auth.py). Toda conta nova nasce sem acesso ao
+// painel admin (isAdmin: false) — só existe uma forma de virar admin,
+// e é direto no banco (de propósito, sem rota que promova conta).
+// Mesmo fluxo de "from" que PaginaLogin.tsx: loga automaticamente
+// depois do cadastro e volta pra de onde veio (ou home).
 // ============================================================
-export default function PaginaLogin() {
+export default function PaginaCadastro() {
   const location = useLocation();
   const navigate = useNavigate();
   const destino = lerOrigem(location.state);
 
+  const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
-  const [entrando, setEntrando] = useState(false);
+  const [cadastrando, setCadastrando] = useState(false);
   const [erro, setErro] = useState("");
 
-  // Já logado (ex: voltou aqui por engano, ou abriu em outra aba
-  // depois de logar) — pula a tela e vai direto pro destino.
   if (estaAutenticado()) return <Navigate to={destino} replace />;
 
-  async function fazerLogin(e: React.FormEvent) {
+  async function fazerCadastro(e: React.FormEvent) {
     e.preventDefault();
-    setEntrando(true);
+    setCadastrando(true);
     setErro("");
     try {
-      const res = await apiFetch("/api/auth/login", {
+      const res = await apiFetch("/api/auth/cadastro", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, senha }),
+        body: JSON.stringify({ nome, email, senha }),
       });
       const dados = await res.json();
       if (res.ok && dados.sucesso) {
         salvarSessao(dados.token, { nome: dados.nome, isAdmin: dados.isAdmin });
         navigate(destino, { replace: true });
       } else {
-        setErro(dados.erro || "Email ou senha incorretos.");
-        setSenha("");
+        setErro(dados.erro || "Não foi possível criar a conta.");
       }
     } catch {
-      setErro("Não foi possível fazer login. Tente novamente.");
-      setSenha("");
+      setErro("Não foi possível criar a conta. Tente novamente.");
     } finally {
-      setEntrando(false);
+      setCadastrando(false);
     }
   }
 
@@ -98,37 +90,41 @@ export default function PaginaLogin() {
       <div style={{ width: "100%", maxWidth: 400 }}>
         <Container
           header={
-            <Header
-              variant="h1"
-              description="COMUNA — Cooperativa Orgânica Agroflorestal"
-            >
+            <Header variant="h1" description="COMUNA — Cooperativa Orgânica Agroflorestal">
               <SpaceBetween direction="horizontal" size="xs" alignItems="center">
-                <Icone nome="lock-private" /><span>Login</span>
+                <Icone nome="user-profile" /><span>Criar conta</span>
               </SpaceBetween>
             </Header>
           }
         >
-          <form onSubmit={fazerLogin}>
+          <form onSubmit={fazerCadastro}>
             <SpaceBetween size="m">
+              <FormField label="Nome">
+                <Input
+                  value={nome}
+                  onChange={({ detail }) => setNome(detail.value)}
+                  placeholder="Seu nome"
+                  autoFocus
+                />
+              </FormField>
               <FormField label="Email">
                 <Input
                   type="email"
                   value={email}
                   onChange={({ detail }) => setEmail(detail.value)}
                   placeholder="seu@email.com"
-                  autoFocus
                 />
               </FormField>
-              <FormField label="Senha" errorText={erro || undefined}>
+              <FormField label="Senha" errorText={erro || undefined} constraintText="Pelo menos 6 caracteres">
                 <Input
                   type="password"
                   value={senha}
                   onChange={({ detail }) => setSenha(detail.value)}
-                  placeholder="Digite a senha"
+                  placeholder="Crie uma senha"
                 />
               </FormField>
-              <Button variant="primary" fullWidth loading={entrando} formAction="submit">
-                {entrando ? "Entrando..." : "Login"}
+              <Button variant="primary" fullWidth loading={cadastrando} formAction="submit">
+                {cadastrando ? "Criando conta..." : "Criar conta"}
               </Button>
               <Button
                 variant="link"
@@ -140,7 +136,7 @@ export default function PaginaLogin() {
                 Cancelar
               </Button>
               <Box textAlign="center" fontSize="body-s">
-                Não tem conta? <RouterLink to="/cadastro" state={location.state}>Cadastre-se</RouterLink>
+                Já tem conta? <RouterLink to="/login" state={location.state}>Fazer login</RouterLink>
               </Box>
             </SpaceBetween>
           </form>

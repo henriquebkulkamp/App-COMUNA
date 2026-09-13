@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import crud
 from app.crud import ProdutoNaoEncontrado
-from app.models import Admin, Configuracao, Produto
+from app.models import Configuracao, Produto, Usuario
 
 
 def _produto(**overrides) -> Produto:
@@ -306,34 +306,54 @@ async def test_salvar_pedido_status_inicial_e_pendente(session: AsyncSession):
     assert pedido.status == "Pendente"  # exatamente esse valor (maiúscula inicial) — é o que o front espera
 
 
-# ─── autenticar_admin ────────────────────────────────────────────────
+# ─── autenticar_usuario ───────────────────────────────────────────────
 
 
-async def test_autenticar_admin_senha_certa_retorna_token_do_admin_certo(session: AsyncSession):
+async def test_autenticar_usuario_senha_certa_retorna_token_do_usuario_certo(session: AsyncSession):
     from app.auth import gerar_hash_senha, verificar_token
 
-    admin = Admin(email="elizete@comuna.local", senha_hash=gerar_hash_senha("segredo123"))
-    session.add(admin)
+    usuario = Usuario(nome="Elizete", email="elizete@comuna.local", senha_hash=gerar_hash_senha("segredo123"))
+    session.add(usuario)
     await session.commit()
-    await session.refresh(admin)
+    await session.refresh(usuario)
 
-    token = await crud.autenticar_admin(session, "elizete@comuna.local", "segredo123")
-    assert token is not None
-    # Mata mutante que trocasse gerar_token(admin.id) por
+    resultado = await crud.autenticar_usuario(session, "elizete@comuna.local", "segredo123")
+    assert resultado is not None
+    token, usuario_retornado = resultado
+    # Mata mutante que trocasse gerar_token(usuario.id) por
     # gerar_token(None) — "token não-nulo" sozinho não pega isso.
-    assert verificar_token(token) == admin.id
+    assert verificar_token(token) == usuario.id
+    assert usuario_retornado.id == usuario.id
 
 
-async def test_autenticar_admin_senha_errada_retorna_none(session: AsyncSession):
+async def test_autenticar_usuario_senha_errada_retorna_none(session: AsyncSession):
     from app.auth import gerar_hash_senha
 
-    session.add(Admin(email="elizete@comuna.local", senha_hash=gerar_hash_senha("segredo123")))
+    session.add(Usuario(nome="Elizete", email="elizete@comuna.local", senha_hash=gerar_hash_senha("segredo123")))
     await session.commit()
 
-    token = await crud.autenticar_admin(session, "elizete@comuna.local", "senha-errada")
-    assert token is None
+    resultado = await crud.autenticar_usuario(session, "elizete@comuna.local", "senha-errada")
+    assert resultado is None
 
 
-async def test_autenticar_admin_email_inexistente_retorna_none(session: AsyncSession):
-    token = await crud.autenticar_admin(session, "ninguem@comuna.local", "qualquer-senha")
-    assert token is None
+async def test_autenticar_usuario_email_inexistente_retorna_none(session: AsyncSession):
+    resultado = await crud.autenticar_usuario(session, "ninguem@comuna.local", "qualquer-senha")
+    assert resultado is None
+
+
+# ─── criar_usuario (cadastro) ─────────────────────────────────────────
+
+
+async def test_criar_usuario_nasce_nao_admin(session: AsyncSession):
+    token, usuario = await crud.criar_usuario(session, nome="João", email="joao@example.com", senha="segredo123")
+    assert token
+    assert usuario.is_admin is False
+    assert usuario.nome == "João"
+
+
+async def test_criar_usuario_email_duplicado_levanta_erro(session: AsyncSession):
+    from app.crud import EmailJaCadastrado
+
+    await crud.criar_usuario(session, nome="João", email="joao@example.com", senha="segredo123")
+    with pytest.raises(EmailJaCadastrado):
+        await crud.criar_usuario(session, nome="Outro João", email="joao@example.com", senha="outrasenha")

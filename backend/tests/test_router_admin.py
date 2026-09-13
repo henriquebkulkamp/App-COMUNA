@@ -10,12 +10,12 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import gerar_hash_senha, gerar_token
-from app.models import Admin, Produto
+from app.models import Produto, Usuario
 
 
 @pytest.fixture
 async def admin_id(session: AsyncSession) -> int:
-    admin = Admin(email="elizete@comuna.local", senha_hash=gerar_hash_senha("segredo123"))
+    admin = Usuario(nome="Elizete", email="elizete@comuna.local", senha_hash=gerar_hash_senha("segredo123"), is_admin=True)
     session.add(admin)
     await session.commit()
     await session.refresh(admin)
@@ -34,32 +34,18 @@ async def _criar_produto(session: AsyncSession, **overrides) -> None:
     await session.commit()
 
 
-# ─── POST /login ─────────────────────────────────────────────────────
+# ─── exigir_admin: conta logada mas sem is_admin não entra ──────────
 
 
-async def test_login_sucesso_retorna_token(client: AsyncClient, session: AsyncSession):
-    session.add(Admin(email="elizete@comuna.local", senha_hash=gerar_hash_senha("segredo123")))
+async def test_conta_nao_admin_com_token_valido_recebe_403(client: AsyncClient, session: AsyncSession):
+    cliente = Usuario(nome="João", email="joao@example.com", senha_hash=gerar_hash_senha("segredo123"), is_admin=False)
+    session.add(cliente)
     await session.commit()
+    await session.refresh(cliente)
 
-    resposta = await client.post("/api/admin/login", json={"email": "elizete@comuna.local", "senha": "segredo123"})
-
-    assert resposta.status_code == 200
-    corpo = resposta.json()
-    assert corpo["sucesso"] is True
-    assert isinstance(corpo["token"], str) and corpo["token"]
-
-
-async def test_login_senha_errada_retorna_401(client: AsyncClient, session: AsyncSession):
-    session.add(Admin(email="elizete@comuna.local", senha_hash=gerar_hash_senha("segredo123")))
-    await session.commit()
-
-    resposta = await client.post("/api/admin/login", json={"email": "elizete@comuna.local", "senha": "errada"})
-    assert resposta.status_code == 401
-
-
-async def test_login_sem_email_retorna_400(client: AsyncClient):
-    resposta = await client.post("/api/admin/login", json={"senha": "qualquer"})
-    assert resposta.status_code == 400
+    header = {"Authorization": f"Bearer {gerar_token(cliente.id)}"}
+    resposta = await client.patch("/api/admin/estoque", json={"produtoId": "abacate", "quantidade": 5}, headers=header)
+    assert resposta.status_code == 403
 
 
 # ─── Toda rota de mutação exige Authorization ───────────────────────

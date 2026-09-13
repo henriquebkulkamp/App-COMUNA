@@ -16,23 +16,15 @@ import {
   spaceScaledL,
 } from "@cloudscape-design/design-tokens";
 import { useCarrinho } from "@/lib/carrinho-context";
-import { TOKEN_STORAGE_KEY } from "@/lib/api";
+import { limparSessao, obterUsuarioLogado } from "@/lib/api";
 import Icone from "@/icons/Icone";
 
 interface HeaderProps {
   mostrarCarrinho?: boolean;
   titulo?: string;
   /** false só dentro do próprio painel admin (PainelAdmin.tsx) — não
-   *  faz sentido mostrar "Área da COMUNA" pra quem já tá logado ali. */
+   *  faz sentido mostrar login/conta pra quem já tá logado ali. */
   mostrarAreaAdmin?: boolean;
-}
-
-function estaAutenticado(): boolean {
-  try {
-    return Boolean(localStorage.getItem(TOKEN_STORAGE_KEY));
-  } catch {
-    return false;
-  }
 }
 
 // ============================================================
@@ -53,16 +45,18 @@ export default function Header({
   const { totalItens } = useCarrinho();
   const navigate = useNavigate();
   const location = useLocation();
+  const usuario = obterUsuarioLogado();
 
-  // Já logado? manda direto pro painel — não faz sentido passar pela
-  // tela de login de novo. Senão, manda pro login guardando esta
-  // página como "de onde veio" (ver PaginaLogin.tsx).
-  function handleAreaAdmin() {
-    if (estaAutenticado()) {
-      navigate("/admin");
-    } else {
-      navigate("/login", { state: { from: { pathname: location.pathname, search: location.search } } });
-    }
+  // Não logado: manda pro login guardando esta página como "de onde
+  // veio" (ver PaginaLogin.tsx). Login não presume mais admin — é
+  // conta normal, is_admin de cada uma que decide o resto.
+  function handleLogin() {
+    navigate("/login", { state: { from: { pathname: location.pathname, search: location.search } } });
+  }
+
+  function handleSair() {
+    limparSessao();
+    navigate("/");
   }
 
   return (
@@ -130,11 +124,33 @@ export default function Header({
         )}
 
         <div style={{ display: "flex", alignItems: "center", gap: spaceScaledXs }}>
-          {/* Botão de acesso admin */}
+          {/* Login/conta — três estados: não logado (Login), logado
+              como admin (atalho pro painel) e logado sem ser admin
+              (só nome + sair — sem painel nenhum, essa conta não tem
+              acesso, ver PaginaAdmin.tsx). */}
           {mostrarAreaAdmin && (
-            <Button onClick={handleAreaAdmin} variant="normal" ariaLabel="Área administrativa">
-              Área da COMUNA
-            </Button>
+            <>
+              {!usuario && (
+                <Button onClick={handleLogin} variant="normal" ariaLabel="Fazer login">
+                  Login
+                </Button>
+              )}
+              {usuario?.isAdmin && (
+                <Button onClick={() => navigate("/admin")} variant="normal" ariaLabel="Painel administrativo">
+                  Painel Admin
+                </Button>
+              )}
+              {usuario && !usuario.isAdmin && (
+                <>
+                  <Box color="inherit" fontSize="body-s">
+                    Olá, {usuario.nome}
+                  </Box>
+                  <Button onClick={handleSair} variant="link" ariaLabel="Sair da conta">
+                    Sair
+                  </Button>
+                </>
+              )}
+            </>
           )}
 
           {/* Ícone do carrinho — href pra ser um link de verdade

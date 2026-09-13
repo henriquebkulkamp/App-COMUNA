@@ -177,10 +177,17 @@ class Solicitacao(Base):
     produtos_solicitados: Mapped[str] = mapped_column(Text, nullable=False)
 
 
-class Admin(Base):
-    __tablename__ = "admins"
+class Usuario(Base):
+    """Conta de login — não é mais só admin (era isso quando a tabela
+    se chamava `admins`). Qualquer conta faz login por aqui
+    (POST /api/auth/login); `is_admin` é o que abre ou não o painel
+    (ver app/auth.py, Depends(exigir_admin))."""
+
+    __tablename__ = "usuarios"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    nome: Mapped[str] = mapped_column(Text, nullable=False, default="")
     email: Mapped[str] = mapped_column(Text, unique=True, nullable=False)
     senha_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    is_admin: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     criado_em: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now())

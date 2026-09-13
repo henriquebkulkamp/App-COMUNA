@@ -3,8 +3,9 @@
 # lib/db.ts (atualizarXNaPlanilha, salvarPedido, salvarSolicitacoes,
 # descontarEstoque). Leituras cacheadas ficam em cache.py.
 #
-# autenticar_admin() substitui o antigo verificarPin — login por conta
-# (email+senha), não mais PIN único (ver app/auth.py).
+# autenticar_usuario() substitui o antigo verificarPin — login por
+# conta (email+senha), não mais PIN único, e vale pra qualquer conta,
+# não só admin (ver app/routers/auth.py e app/auth.py::exigir_admin).
 # ============================================================
 
 import time
@@ -13,15 +14,20 @@ from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .auth import gerar_token, verificar_senha
+from .auth import gerar_hash_senha, gerar_token, verificar_senha
 from .cache import invalidar_cache_configuracoes
-from .models import Admin, Configuracao, Pedido, Produto, Solicitacao
+from .models import Configuracao, Pedido, Produto, Solicitacao, Usuario
 
 
 class ProdutoNaoEncontrado(Exception):
     """Espelha o `throw new Error(...)` das funções atualizarXNaPlanilha
     em lib/db.ts quando `rowCount` vem zero — nas rotas, isso vira um
     500 genérico (não um 404), igual ao comportamento original."""
+
+
+class EmailJaCadastrado(Exception):
+    """Levantada por criar_usuario quando o email já pertence a outra
+    conta — a rota transforma isso num 409, não num 500 genérico."""
 
 
 async def atualizar_quantidade(session: AsyncSession, produto_id: str, quantidade: int) -> None:
@@ -107,16 +113,32 @@ async def remover_produto(session: AsyncSession, produto_id: str) -> None:
     await session.commit()
 
 
-async def autenticar_admin(session: AsyncSession, email: str, senha: str) -> str | None:
-    """Verifica email+senha contra a tabela `admins` e, se bater, retorna
-    um token de sessão assinado (ver app/auth.py). None em qualquer
-    falha (email não existe ou senha errada) — a rota não distingue os
-    dois casos na resposta, pra não revelar quais emails têm conta."""
-    resultado = await session.execute(select(Admin).where(Admin.email == email))
-    admin = resultado.scalar_one_or_none()
-    if admin is None or not verificar_senha(senha, admin.senha_hash):
+async def autenticar_usuario(session: AsyncSession, email: str, senha: str) -> tuple[str, Usuario] | None:
+    """Verifica email+senha contra a tabela `usuarios` (qualquer conta,
+    não só admin) e, se bater, retorna (token, usuario). None em
+    qualquer falha (email não existe ou senha errada) — a rota não
+    distingue os dois casos na resposta, pra não revelar quais emails
+    têm conta."""
+    resultado = await session.execute(select(Usuario).where(Usuario.email == email))
+    usuario = resultado.scalar_one_or_none()
+    if usuario is None or not verificar_senha(senha, usuario.senha_hash):
         return None
-    return gerar_token(admin.id)
+    return gerar_token(usuario.id), usuario
+
+
+async def criar_usuario(session: AsyncSession, *, nome: str, email: str, senha: str) -> tuple[str, Usuario]:
+    """Cadastro público (POST /api/auth/cadastro) — nasce sempre
+    is_admin=False; só vira admin por ação direta no banco (não existe
+    rota que promova uma conta, de propósito)."""
+    ja_existe = (await session.execute(select(Usuario).where(Usuario.email == email))).scalar_one_or_none()
+    if ja_existe is not None:
+        raise EmailJaCadastrado(email)
+
+    usuario = Usuario(nome=nome, email=email, senha_hash=gerar_hash_senha(senha), is_admin=False)
+    session.add(usuario)
+    await session.commit()
+    await session.refresh(usuario)
+    return gerar_token(usuario.id), usuario
 
 
 async def atualizar_configuracao(session: AsyncSession, chave: str, novo_valor: str) -> None:

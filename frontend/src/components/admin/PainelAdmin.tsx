@@ -11,7 +11,7 @@ import {
 } from "@cloudscape-design/design-tokens";
 import Header from "@/components/shared/Header";
 import { LojaProvider } from "@/lib/loja-context";
-import { TOKEN_STORAGE_KEY } from "@/lib/api";
+import { limparSessao } from "@/lib/api";
 import Icone from "@/icons/Icone";
 
 // Table/ColumnLayout/Checkbox/Select/Textarea (e o próprio Tabs) só
@@ -44,7 +44,7 @@ export default function PainelAdmin({ onSair }: PainelAdminProps) {
   const [abaAtiva, setAbaAtiva] = useState<AbaAtiva>("cesta");
 
   function sair() {
-    localStorage.removeItem(TOKEN_STORAGE_KEY);
+    limparSessao();
     onSair();
   }
 

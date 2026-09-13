@@ -3,6 +3,7 @@ import PaginaPrincipal from "@/pages/PaginaPrincipal";
 import PaginaProduto from "@/pages/PaginaProduto";
 import PaginaCarrinho from "@/pages/PaginaCarrinho";
 import PaginaLogin from "@/pages/PaginaLogin";
+import PaginaCadastro from "@/pages/PaginaCadastro";
 import PaginaAdmin from "@/pages/PaginaAdmin";
 
 // ============================================================
@@ -33,6 +34,7 @@ export default function App() {
         <Route path="/carrinho" element={<PaginaCarrinho />} />
         <Route path="/cliente" element={<Navigate to="/" replace />} />
         <Route path="/login" element={<PaginaLogin />} />
+        <Route path="/cadastro" element={<PaginaCadastro />} />
         <Route path="/admin" element={<PaginaAdmin />} />
       </Routes>
     </BrowserRouter>

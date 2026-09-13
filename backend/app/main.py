@@ -16,8 +16,8 @@ from sqlalchemy import select
 from .auth import gerar_hash_senha
 from .config import settings
 from .database import SessionLocal
-from .models import Admin
-from .routers import admin, config, pedidos, produtos
+from .models import Usuario
+from .routers import admin, auth, config, pedidos, produtos
 
 logger = logging.getLogger(__name__)
 
@@ -35,20 +35,28 @@ app.include_router(produtos.router, prefix="/api/produtos", tags=["produtos"])
 app.include_router(pedidos.router, prefix="/api/pedidos", tags=["pedidos"])
 app.include_router(config.router, prefix="/api/config", tags=["config"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 
 
 @app.on_event("startup")
 async def semear_admin_padrao() -> None:
     """Cria a conta admin padrão (ADMIN_EMAIL/ADMIN_SENHA do .env) na
-    primeira vez que o backend sobe com a tabela `admins` vazia — só
+    primeira vez que o backend sobe com a tabela `usuarios` vazia — só
     então, nunca sobrescreve nem duplica em subidas seguintes.
     Analogia: um `python manage.py createsuperuser` que roda sozinho
     uma única vez, em vez de exigir passo manual."""
     async with SessionLocal() as session:
-        ja_existe_algum_admin = (await session.execute(select(Admin.id).limit(1))).first() is not None
-        if ja_existe_algum_admin:
+        ja_existe_algum_usuario = (await session.execute(select(Usuario.id).limit(1))).first() is not None
+        if ja_existe_algum_usuario:
             return
-        session.add(Admin(email=settings.admin_email, senha_hash=gerar_hash_senha(settings.admin_senha)))
+        session.add(
+            Usuario(
+                nome="Elizete",
+                email=settings.admin_email,
+                senha_hash=gerar_hash_senha(settings.admin_senha),
+                is_admin=True,
+            )
+        )
         await session.commit()
         logger.info("Conta admin padrão criada: %s (troque a senha depois de logar).", settings.admin_email)
 

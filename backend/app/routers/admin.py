@@ -1,14 +1,9 @@
 # ============================================================
-# /api/admin/** — espelha app/api/admin/**/route.ts, um handler por
-# arquivo original.
-#
-# POST /login é a única rota aberta daqui — todas as outras (mutação
-# de estoque/preço/cesta/produto/config) agora exigem
-# `Authorization: Bearer <token>` válido (Depends(exigir_admin), ver
-# app/auth.py). Isso substitui o antigo "buraco" que existia no
-# Next.js (PIN só checado no formulário do painel, nunca nas rotas de
-# mutação em si) — a migração pro login por conta foi a oportunidade
-# de fechar isso, não só trocar a cara do PIN.
+# /api/admin/** — mutação de estoque/preço/cesta/produto/config.
+# TODA rota daqui exige `Authorization: Bearer <token>` de uma conta
+# com is_admin=true (Depends(exigir_admin), ver app/auth.py) — login
+# em si mora em app/routers/auth.py (POST /api/auth/login), já que
+# logar não é mais uma ação exclusiva de admin.
 # ============================================================
 
 import logging
@@ -38,31 +33,6 @@ CATEGORIAS_VALIDAS = (
     "Pães e Panificação",
     "Mel e Apícolas",
 )
-
-
-# ─── POST /api/admin/login ───────────────────────────────────────
-# Substitui POST /api/admin/verificar-pin. Corpo: { email, senha }.
-# Retorna { sucesso: true, token } ou 401 se email/senha não baterem.
-@router.post("/login")
-async def login(request: Request, session: AsyncSession = Depends(get_session)):
-    try:
-        body = await request.json()
-        email = body.get("email")
-        senha = body.get("senha")
-
-        if not isinstance(email, str) or not email or not isinstance(senha, str) or not senha:
-            return JSONResponse(status_code=400, content={"erro": "Campos obrigatórios: email, senha"})
-
-        token = await crud.autenticar_admin(session, email, senha)
-        if token is None:
-            return JSONResponse(status_code=401, content={"erro": "Email ou senha incorretos."})
-
-        return {"sucesso": True, "token": token}
-    except Exception as erro:
-        logger.error("[POST /api/admin/login] Erro: %s", erro)
-        return JSONResponse(
-            status_code=500, content={"erro": "Não foi possível fazer login. Tente novamente."}
-        )
 
 
 # ─── PATCH /api/admin/config ────────────────────────────────────
