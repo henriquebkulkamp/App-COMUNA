@@ -12,6 +12,8 @@ from sqlalchemy import (
     BigInteger,
     Boolean,
     CheckConstraint,
+    ForeignKey,
+    Index,
     Integer,
     Numeric,
     Text,
@@ -71,6 +73,68 @@ class Produto(Base):
             "'Pães e Panificação','Mel e Apícolas')",
             name="produtos_categoria_check",
         ),
+    )
+
+
+class ProdutoIngrediente(Base):
+    """Lista de ingredientes de UM produto, na ordem em que aparecem no
+    rótulo (`ordem`, igual à convenção real de rotulagem — ingrediente
+    em maior quantidade primeiro). Produto in natura (ex: abacate) tem
+    uma única linha, igual ao próprio nome do produto — não existe
+    "sem ingrediente nenhum" aqui, só "o ingrediente é o produto"."""
+
+    __tablename__ = "produto_ingredientes"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    produto_id: Mapped[str] = mapped_column(
+        Text, ForeignKey("produtos.id", ondelete="CASCADE"), nullable=False
+    )
+    nome: Mapped[str] = mapped_column(Text, nullable=False)
+    ordem: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    __table_args__ = (Index("ix_produto_ingredientes_produto_id", "produto_id"),)
+
+
+class ProdutoInfoNutricional(Base):
+    """Tabela nutricional de UM produto (relação 1:1 — `produto_id` é a
+    própria chave primária). Todo nutriente é opcional: NULL = não
+    declarado no rótulo (produto sem essa info cadastrada ainda), bem
+    diferente de zero — quem exibe (ver frontend/src/lib/nutricional.ts)
+    só mostra a linha quando o valor não é nulo, igual a um rótulo real
+    só listar o que de fato foi medido.
+
+    Unidades espelham de propósito o padrão de rótulo em
+    frontend/src/components/cliente/TabelaNutricional.tsx (peça de
+    referência: rótulo estilo FDA/Amazon) — inclusive vitamina A em mg
+    (tecnicamente seria mcg/RAE, mas é o que o rótulo de referência
+    usa)."""
+
+    __tablename__ = "produto_info_nutricional"
+
+    produto_id: Mapped[str] = mapped_column(
+        Text, ForeignKey("produtos.id", ondelete="CASCADE"), primary_key=True
+    )
+    # Base da tabela — quase sempre "100 g", mas alguns produtos vêm
+    # com porção por unidade (ex: "1 unidade (150 g)").
+    porcao: Mapped[str] = mapped_column(Text, nullable=False, default="100 g")
+    calorias_kcal: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
+    gorduras_totais_g: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
+    gorduras_saturadas_g: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
+    gorduras_trans_g: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
+    colesterol_mg: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
+    sodio_mg: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
+    carboidratos_totais_g: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
+    fibra_alimentar_g: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
+    acucares_g: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
+    proteinas_g: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
+    vitamina_a_mg: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
+    vitamina_c_mg: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
+    calcio_mg: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
+    ferro_mg: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
+    potassio_mg: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
+
+    __table_args__ = (
+        CheckConstraint("calorias_kcal IS NULL OR calorias_kcal >= 0", name="info_nutricional_calorias_check"),
     )
 
 

@@ -1,0 +1,137 @@
+{
+  "receita": "salada_de_frutas_sem_mel",
+  "por_100g": {
+    "energia_kcal": 54.5,
+    "umidade_g": 85.45,
+    "carboidrato_total_g": 13.25,
+    "acucares_totais_g": 11.205,
+    "proteina_g": 0.595,
+    "lipidios_g": 0.365,
+    "fibra_alimentar_g": 2.045,
+    "cinzas_g": 0.32,
+    "colesterol_mg": 0.0,
+    "gordura_saturada_g": 0.12,
+    "gordura_monoinsaturada_g": 0.03,
+    "gordura_poliinsaturada_g": 0.03,
+    "gordura_trans_g": 0.0,
+    "calcio_mg": 18.475,
+    "ferro_mg": 0.095,
+    "sodio_mg": 0.595,
+    "magnesio_mg": 13.1,
+    "fosforo_mg": 20.6,
+    "potassio_mg": 288.5,
+    "zinco_mg": 0.055,
+    "vitamina_a_rae_mcg": 2.49,
+    "vitamina_c_mg": 24.625,
+    "vitamina_e_mg": 0.445,
+    "folato_mcg": 15.785
+  },
+  "por_porcao": {
+    "energia_kcal": 81.75,
+    "umidade_g": 128.175,
+    "carboidrato_total_g": 19.875,
+    "acucares_totais_g": 16.807,
+    "proteina_g": 0.892,
+    "lipidios_g": 0.547,
+    "fibra_alimentar_g": 3.067,
+    "cinzas_g": 0.48,
+    "colesterol_mg": 0.0,
+    "gordura_saturada_g": 0.18,
+    "gordura_monoinsaturada_g": 0.045,
+    "gordura_poliinsaturada_g": 0.045,
+    "gordura_trans_g": 0.0,
+    "calcio_mg": 27.712,
+    "ferro_mg": 0.143,
+    "sodio_mg": 0.892,
+    "magnesio_mg": 19.65,
+    "fosforo_mg": 30.9,
+    "potassio_mg": 432.75,
+    "zinco_mg": 0.083,
+    "vitamina_a_rae_mcg": 3.735,
+    "vitamina_c_mg": 36.937,
+    "vitamina_e_mg": 0.667,
+    "folato_mcg": 23.678
+  },
+  "porcao_g": 150,
+  "rendimento_final_g": 300,
+  "peso_total_ingredientes_g": 300.0,
+  "formulacao": {
+    "sem_acucar_adicionado": true,
+    "sem_sal_adicionado": true,
+    "sem_gordura_adicionada": true
+  },
+  "memoria_calculo": [
+    {
+      "codigo_tbca": "BRC0023C",
+      "nome": "Maçã, com casca, in natura",
+      "quantidade_g": 150
+    },
+    {
+      "codigo_tbca": "BRC0017C",
+      "nome": "Laranja, in natura",
+      "quantidade_g": 150
+    }
+  ],
+  "avisos": [
+    "Maçã, com casca, in natura (BRC0023C): gordura_monoinsaturada_g traço na TBCA",
+    "Maçã, com casca, in natura (BRC0023C): gordura_poliinsaturada_g traço na TBCA",
+    "Maçã, com casca, in natura (BRC0023C): zinco_mg traço na TBCA"
+  ],
+  "alegacoes_elegiveis": [
+    {
+      "texto": "Baixo teor de gorduras totais",
+      "base_legal": "IN 75/2020, Anexo XX",
+      "valor_calculado": 0.5475,
+      "limite": 3
+    },
+    {
+      "texto": "Baixo teor de gordura saturada",
+      "base_legal": "IN 75/2020, Anexo XX",
+      "valor_calculado": 0.18000000000000002,
+      "limite": 1.5
+    },
+    {
+      "texto": "Zero gordura trans / não contém",
+      "base_legal": "IN 75/2020, Anexo XX",
+      "valor_calculado": 0.0,
+      "limite": 0.1
+    },
+    {
+      "texto": "Não contém sódio",
+      "base_legal": "IN 75/2020, Anexo XX",
+      "valor_calculado": 0.8925,
+      "limite": 5
+    },
+    {
+      "texto": "Muito baixo teor de sódio",
+      "base_legal": "IN 75/2020, Anexo XX",
+      "valor_calculado": 0.8925,
+      "limite": 40
+    },
+    {
+      "texto": "Baixo teor de sódio",
+      "base_legal": "IN 75/2020, Anexo XX",
+      "valor_calculado": 0.8925,
+      "limite": 80
+    },
+    {
+      "texto": "Sem adição de açúcares",
+      "base_legal": "IN 75/2020, Anexo XX",
+      "valor_calculado": 0,
+      "limite": 0
+    },
+    {
+      "texto": "Sem adição de sal",
+      "base_legal": "IN 75/2020, Anexo XX",
+      "valor_calculado": 0,
+      "limite": 0
+    },
+    {
+      "texto": "Sem adição de gorduras/óleos",
+      "base_legal": "IN 75/2020, Anexo XX",
+      "valor_calculado": 0,
+      "limite": 0
+    }
+  ],
+  "versao_tbca": "7.2"
+}

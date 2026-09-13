@@ -30,6 +30,22 @@ input[type="number"]::-webkit-inner-spin-button {
   background-color: #f3f3f7;
 }
 
+/* CartaoProduto (vitrine, carrossel de destaques) é um link pra
+   /produto/:id inteiro — esse leve "levantar" no hover é o único jeito
+   de indicar que o card é clicável sem competir com o clique em si
+   (um botão "ver mais" por cima seria um segundo alvo). Sombra e
+   translateY não têm token do Cloudscape pra "elevação ao passar o
+   mouse" (só shadowCard/shadowContainerActive, pra estado ativo/fixo,
+   não hover) — por isso hardcoded, igual ao hover de SugestoesBusca
+   acima. */
+.comuna-cartao-produto {
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.comuna-cartao-produto:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
 /* Título central do Header no modo admin — some em telas pequenas,
    igual ao comportamento original (Tailwind `hidden sm:block`). */
 .comuna-header-titulo {

@@ -1,0 +1,137 @@
+{
+  "receita": "salada_de_frutas_com_mel",
+  "por_100g": {
+    "energia_kcal": 67.333,
+    "umidade_g": 82.271,
+    "carboidrato_total_g": 16.471,
+    "acucares_totais_g": 14.514,
+    "proteina_g": 0.575,
+    "lipidios_g": 0.348,
+    "fibra_alimentar_g": 1.957,
+    "cinzas_g": 0.313,
+    "colesterol_mg": 0.0,
+    "gordura_saturada_g": 0.114,
+    "gordura_monoinsaturada_g": 0.029,
+    "gordura_poliinsaturada_g": 0.029,
+    "gordura_trans_g": 0.0,
+    "calcio_mg": 18.129,
+    "ferro_mg": 0.12,
+    "sodio_mg": 0.855,
+    "magnesio_mg": 12.872,
+    "fosforo_mg": 19.764,
+    "potassio_mg": 280.619,
+    "zinco_mg": 0.068,
+    "vitamina_a_rae_mcg": 2.371,
+    "vitamina_c_mg": 23.486,
+    "vitamina_e_mg": 0.424,
+    "folato_mcg": 15.127
+  },
+  "por_porcao": {
+    "energia_kcal": 101.0,
+    "umidade_g": 123.407,
+    "carboidrato_total_g": 24.707,
+    "acucares_totais_g": 21.771,
+    "proteina_g": 0.862,
+    "lipidios_g": 0.521,
+    "fibra_alimentar_g": 2.936,
+    "cinzas_g": 0.47,
+    "colesterol_mg": 0.0,
+    "gordura_saturada_g": 0.171,
+    "gordura_monoinsaturada_g": 0.043,
+    "gordura_poliinsaturada_g": 0.043,
+    "gordura_trans_g": 0.0,
+    "calcio_mg": 27.193,
+    "ferro_mg": 0.18,
+    "sodio_mg": 1.283,
+    "magnesio_mg": 19.308,
+    "fosforo_mg": 29.646,
+    "potassio_mg": 420.929,
+    "zinco_mg": 0.102,
+    "vitamina_a_rae_mcg": 3.557,
+    "vitamina_c_mg": 35.229,
+    "vitamina_e_mg": 0.636,
+    "folato_mcg": 22.69
+  },
+  "porcao_g": 150,
+  "rendimento_final_g": 315,
+  "peso_total_ingredientes_g": 315.0,
+  "formulacao": {
+    "sem_acucar_adicionado": false,
+    "sem_sal_adicionado": true,
+    "sem_gordura_adicionada": true
+  },
+  "memoria_calculo": [
+    {
+      "codigo_tbca": "BRC0023C",
+      "nome": "Maçã, com casca, in natura",
+      "quantidade_g": 150
+    },
+    {
+      "codigo_tbca": "BRC0017C",
+      "nome": "Laranja, in natura",
+      "quantidade_g": 150
+    },
+    {
+      "codigo_tbca": "BRC0028K",
+      "nome": "Mel de abelha",
+      "quantidade_g": 15
+    }
+  ],
+  "avisos": [
+    "Maçã, com casca, in natura (BRC0023C): gordura_monoinsaturada_g traço na TBCA",
+    "Maçã, com casca, in natura (BRC0023C): gordura_poliinsaturada_g traço na TBCA",
+    "Maçã, com casca, in natura (BRC0023C): zinco_mg traço na TBCA",
+    "Mel de abelha (BRC0028K): gordura_trans_g ausente na TBCA"
+  ],
+  "alegacoes_elegiveis": [
+    {
+      "texto": "Baixo teor de gorduras totais",
+      "base_legal": "IN 75/2020, Anexo XX",
+      "valor_calculado": 0.5214285714285714,
+      "limite": 3
+    },
+    {
+      "texto": "Baixo teor de gordura saturada",
+      "base_legal": "IN 75/2020, Anexo XX",
+      "valor_calculado": 0.17142857142857143,
+      "limite": 1.5
+    },
+    {
+      "texto": "Zero gordura trans / não contém",
+      "base_legal": "IN 75/2020, Anexo XX",
+      "valor_calculado": 0.0,
+      "limite": 0.1
+    },
+    {
+      "texto": "Não contém sódio",
+      "base_legal": "IN 75/2020, Anexo XX",
+      "valor_calculado": 1.2828571428571427,
+      "limite": 5
+    },
+    {
+      "texto": "Muito baixo teor de sódio",
+      "base_legal": "IN 75/2020, Anexo XX",
+      "valor_calculado": 1.2828571428571427,
+      "limite": 40
+    },
+    {
+      "texto": "Baixo teor de sódio",
+      "base_legal": "IN 75/2020, Anexo XX",
+      "valor_calculado": 1.2828571428571427,
+      "limite": 80
+    },
+    {
+      "texto": "Sem adição de sal",
+      "base_legal": "IN 75/2020, Anexo XX",
+      "valor_calculado": 0,
+      "limite": 0
+    },
+    {
+      "texto": "Sem adição de gorduras/óleos",
+      "base_legal": "IN 75/2020, Anexo XX",
+      "valor_calculado": 0,
+      "limite": 0
+    }
+  ],
+  "versao_tbca": "7.2"
+}

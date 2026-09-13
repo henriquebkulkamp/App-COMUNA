@@ -1,0 +1,133 @@
+{
+  "receita": "salada_de_frango_grelhado",
+  "por_100g": {
+    "energia_kcal": 97.878,
+    "umidade_g": 79.005,
+    "carboidrato_total_g": 2.484,
+    "acucares_totais_g": 1.304,
+    "proteina_g": 13.007,
+    "lipidios_g": 4.258,
+    "fibra_alimentar_g": 1.178,
+    "cinzas_g": 1.225,
+    "colesterol_mg": 34.379,
+    "gordura_saturada_g": 0.84,
+    "gordura_monoinsaturada_g": 2.784,
+    "gordura_poliinsaturada_g": 0.468,
+    "gordura_trans_g": 0.015,
+    "calcio_mg": 13.392,
+    "ferro_mg": 0.402,
+    "sodio_mg": 151.069,
+    "magnesio_mg": 13.511,
+    "fosforo_mg": 127.939,
+    "potassio_mg": 293.177,
+    "zinco_mg": 0.435,
+    "vitamina_a_rae_mcg": 101.762,
+    "vitamina_c_mg": 7.785,
+    "vitamina_e_mg": 1.041,
+    "folato_mcg": 13.215
+  },
+  "por_porcao": {
+    "energia_kcal": 304.4,
+    "umidade_g": 245.704,
+    "carboidrato_total_g": 7.726,
+    "acucares_totais_g": 4.056,
+    "proteina_g": 40.452,
+    "lipidios_g": 13.241,
+    "fibra_alimentar_g": 3.665,
+    "cinzas_g": 3.811,
+    "colesterol_mg": 106.92,
+    "gordura_saturada_g": 2.611,
+    "gordura_monoinsaturada_g": 8.659,
+    "gordura_poliinsaturada_g": 1.456,
+    "gordura_trans_g": 0.048,
+    "calcio_mg": 41.649,
+    "ferro_mg": 1.25,
+    "sodio_mg": 469.824,
+    "magnesio_mg": 42.02,
+    "fosforo_mg": 397.89,
+    "potassio_mg": 911.78,
+    "zinco_mg": 1.352,
+    "vitamina_a_rae_mcg": 316.48,
+    "vitamina_c_mg": 24.21,
+    "vitamina_e_mg": 3.236,
+    "folato_mcg": 41.1
+  },
+  "porcao_g": 311,
+  "rendimento_final_g": 311,
+  "peso_total_ingredientes_g": 311.0,
+  "formulacao": {
+    "sem_acucar_adicionado": true,
+    "sem_sal_adicionado": false,
+    "sem_gordura_adicionada": false
+  },
+  "memoria_calculo": [
+    {
+      "codigo_tbca": "BRC0114F",
+      "nome": "Peito de frango, sem pele, grelhado",
+      "quantidade_g": 120
+    },
+    {
+      "codigo_tbca": "BRC0009B",
+      "nome": "Alface, crua",
+      "quantidade_g": 50
+    },
+    {
+      "codigo_tbca": "BRC0035B",
+      "nome": "Tomate, cru",
+      "quantidade_g": 80
+    },
+    {
+      "codigo_tbca": "BRC0020B",
+      "nome": "Cenoura, sem casca, crua",
+      "quantidade_g": 50
+    },
+    {
+      "codigo_tbca": "BRC0002D",
+      "nome": "Azeite de oliva",
+      "quantidade_g": 10
+    },
+    {
+      "codigo_tbca": "BRC0020L",
+      "nome": "Sal refinado",
+      "quantidade_g": 1
+    }
+  ],
+  "avisos": [
+    "Alface, crua (BRC0009B): gordura_monoinsaturada_g traço na TBCA",
+    "Azeite de oliva (BRC0002D): gordura_trans_g ausente na TBCA",
+    "Peito de frango, sem pele, grelhado (BRC0114F): vitamina_a_rae_mcg traço na TBCA"
+  ],
+  "alegacoes_elegiveis": [
+    {
+      "texto": "Zero gordura trans / não contém",
+      "base_legal": "IN 75/2020, Anexo XX",
+      "valor_calculado": 0.048,
+      "limite": 0.1
+    },
+    {
+      "texto": "Fonte de fibra alimentar",
+      "base_legal": "IN 75/2020, Anexo XX",
+      "valor_calculado": 3.665,
+      "limite": 2.5
+    },
+    {
+      "texto": "Fonte de proteína",
+      "base_legal": "IN 75/2020, Anexo XX",
+      "valor_calculado": 40.452000000000005,
+      "limite": 5.0
+    },
+    {
+      "texto": "Alto teor / rico em proteína",
+      "base_legal": "IN 75/2020, Anexo XX",
+      "valor_calculado": 40.452000000000005,
+      "limite": 10.0
+    },
+    {
+      "texto": "Sem adição de açúcares",
+      "base_legal": "IN 75/2020, Anexo XX",
+      "valor_calculado": 0,
+      "limite": 0
+    }
+  ],
+  "versao_tbca": "7.2"
+}

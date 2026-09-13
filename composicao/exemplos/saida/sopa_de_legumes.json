@@ -1,0 +1,124 @@
+{
+  "receita": "sopa_de_legumes",
+  "por_100g": {
+    "energia_kcal": 45.4,
+    "umidade_g": 49.276,
+    "carboidrato_total_g": 6.829,
+    "acucares_totais_g": 5.589,
+    "proteina_g": 0.976,
+    "lipidios_g": 1.838,
+    "fibra_alimentar_g": 1.241,
+    "cinzas_g": 0.949,
+    "colesterol_mg": 0.0,
+    "gordura_saturada_g": 0.278,
+    "gordura_monoinsaturada_g": 1.337,
+    "gordura_poliinsaturada_g": 0.199,
+    "gordura_trans_g": 0.0,
+    "calcio_mg": 7.525,
+    "ferro_mg": 0.238,
+    "sodio_mg": 190.701,
+    "magnesio_mg": 7.591,
+    "fosforo_mg": 22.151,
+    "potassio_mg": 193.838,
+    "zinco_mg": 0.16,
+    "vitamina_a_rae_mcg": 87.059,
+    "vitamina_c_mg": 10.284,
+    "vitamina_e_mg": 0.478,
+    "folato_mcg": 9.647
+  },
+  "por_porcao": {
+    "energia_kcal": 113.5,
+    "umidade_g": 123.19,
+    "carboidrato_total_g": 17.073,
+    "acucares_totais_g": 13.973,
+    "proteina_g": 2.441,
+    "lipidios_g": 4.595,
+    "fibra_alimentar_g": 3.103,
+    "cinzas_g": 2.372,
+    "colesterol_mg": 0.0,
+    "gordura_saturada_g": 0.696,
+    "gordura_monoinsaturada_g": 3.341,
+    "gordura_poliinsaturada_g": 0.497,
+    "gordura_trans_g": 0.0,
+    "calcio_mg": 18.814,
+    "ferro_mg": 0.595,
+    "sodio_mg": 476.753,
+    "magnesio_mg": 18.976,
+    "fosforo_mg": 55.376,
+    "potassio_mg": 484.594,
+    "zinco_mg": 0.401,
+    "vitamina_a_rae_mcg": 217.647,
+    "vitamina_c_mg": 25.711,
+    "vitamina_e_mg": 1.195,
+    "folato_mcg": 24.117
+  },
+  "porcao_g": 250,
+  "rendimento_final_g": 850,
+  "peso_total_ingredientes_g": 509.0,
+  "formulacao": {
+    "sem_acucar_adicionado": true,
+    "sem_sal_adicionado": false,
+    "sem_gordura_adicionada": false
+  },
+  "memoria_calculo": [
+    {
+      "codigo_tbca": "BRC0020B",
+      "nome": "Cenoura, sem casca, crua",
+      "quantidade_g": 200
+    },
+    {
+      "codigo_tbca": "BRC0013B",
+      "nome": "Batata inglesa, sem casca, crua",
+      "quantidade_g": 200
+    },
+    {
+      "codigo_tbca": "BRC0018B",
+      "nome": "Cebola branca, crua",
+      "quantidade_g": 80
+    },
+    {
+      "codigo_tbca": "BRC0010B",
+      "nome": "Alho, cru",
+      "quantidade_g": 10
+    },
+    {
+      "codigo_tbca": "BRC0002D",
+      "nome": "Azeite de oliva",
+      "quantidade_g": 15
+    },
+    {
+      "codigo_tbca": "BRC0020L",
+      "nome": "Sal refinado",
+      "quantidade_g": 4
+    }
+  ],
+  "avisos": [
+    "Alho, cru (BRC0010B): gordura_monoinsaturada_g traço na TBCA",
+    "Alho, cru (BRC0010B): vitamina_a_rae_mcg traço na TBCA",
+    "Azeite de oliva (BRC0002D): gordura_trans_g ausente na TBCA",
+    "Batata inglesa, sem casca, crua (BRC0013B): gordura_monoinsaturada_g traço na TBCA",
+    "Batata inglesa, sem casca, crua (BRC0013B): sodio_mg traço na TBCA",
+    "Batata inglesa, sem casca, crua (BRC0013B): vitamina_a_rae_mcg traço na TBCA"
+  ],
+  "alegacoes_elegiveis": [
+    {
+      "texto": "Baixo teor de gordura saturada",
+      "base_legal": "IN 75/2020, Anexo XX",
+      "valor_calculado": 0.6961764705882354,
+      "limite": 1.5
+    },
+    {
+      "texto": "Zero gordura trans / não contém",
+      "base_legal": "IN 75/2020, Anexo XX",
+      "valor_calculado": 0.0,
+      "limite": 0.1
+    },
+    {
+      "texto": "Sem adição de açúcares",
+      "base_legal": "IN 75/2020, Anexo XX",
+      "valor_calculado": 0,
+      "limite": 0
+    }
+  ],
+  "versao_tbca": "7.2"
+}

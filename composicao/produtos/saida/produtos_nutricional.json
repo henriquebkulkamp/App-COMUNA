@@ -1,0 +1,100 @@
+{
+  "abacate": {
+    "ingredientes": [
+      "Abacate"
+    ],
+    "infoNutricional": {
+      "porcao": "100 g",
+      "caloriasKcal": 76.0,
+      "gordurasTotaisG": 6.21,
+      "gordurasSaturadasG": 1.7,
+      "gordurasTransG": 0.0,
+      "colesterolMg": 0.0,
+      "sodioMg": 0.0,
+      "carboidratosTotaisG": 5.84,
+      "fibraAlimentarG": 4.03,
+      "acucaresG": 1.81,
+      "proteinasG": 1.15,
+      "vitaminaAMg": 3.11,
+      "vitaminaCMg": 7.32,
+      "calcioMg": 7.16,
+      "ferroMg": 0.18,
+      "potassioMg": 174.0
+    }
+  },
+  "mel-silvestre-cipo-uva-350": {
+    "ingredientes": [
+      "Mel silvestre"
+    ],
+    "infoNutricional": {
+      "porcao": "100 g",
+      "caloriasKcal": 324.0,
+      "gordurasTotaisG": 0.0,
+      "gordurasSaturadasG": 0.0,
+      "gordurasTransG": 0.0,
+      "colesterolMg": 0.0,
+      "sodioMg": 6.06,
+      "carboidratosTotaisG": 80.9,
+      "fibraAlimentarG": 0.2,
+      "acucaresG": 80.7,
+      "proteinasG": 0.17,
+      "vitaminaAMg": 0.0,
+      "vitaminaCMg": 0.71,
+      "calcioMg": 11.2,
+      "ferroMg": 0.62,
+      "potassioMg": 123.0
+    }
+  },
+  "banana-passa": {
+    "ingredientes": [
+      "Banana passa"
+    ],
+    "infoNutricional": {
+      "porcao": "100 g",
+      "caloriasKcal": 266.0,
+      "gordurasTotaisG": 0.51,
+      "gordurasSaturadasG": 0.19,
+      "gordurasTransG": 0.0,
+      "colesterolMg": 0.0,
+      "sodioMg": 0.0,
+      "carboidratosTotaisG": 64.6,
+      "fibraAlimentarG": 4.85,
+      "acucaresG": 59.7,
+      "proteinasG": 3.15,
+      "vitaminaAMg": 72.6,
+      "vitaminaCMg": 29.1,
+      "calcioMg": 9.72,
+      "ferroMg": 0.74,
+      "potassioMg": 764.0
+    }
+  },
+  "bolo-mandioca": {
+    "ingredientes": [
+      "Mandioca",
+      "Ovos",
+      "Açúcar",
+      "Farinha de trigo",
+      "Manteiga",
+      "Leite",
+      "Fermento em pó"
+    ],
+    "infoNutricional": {
+      "porcao": "100 g",
+      "caloriasKcal": 262.0,
+      "gordurasTotaisG": 9.54,
+      "gordurasSaturadasG": 5.39,
+      "gordurasTransG": 0.32,
+      "colesterolMg": 54.87,
+      "sodioMg": 191.38,
+      "carboidratosTotaisG": 41.42,
+      "fibraAlimentarG": 1.22,
+      "acucaresG": 40.19,
+      "proteinasG": 3.16,
+      "vitaminaAMg": 31.57,
+      "vitaminaCMg": 7.65,
+      "calcioMg": 92.12,
+      "ferroMg": 0.81,
+      "potassioMg": 277.14
+    }
+  }
+}

@@ -1,0 +1,141 @@
+{
+  "receita": "arroz_com_feijao_temperado",
+  "por_100g": {
+    "energia_kcal": 104.264,
+    "umidade_g": 77.084,
+    "carboidrato_total_g": 19.319,
+    "acucares_totais_g": 15.071,
+    "proteina_g": 3.439,
+    "lipidios_g": 2.377,
+    "fibra_alimentar_g": 4.245,
+    "cinzas_g": 1.013,
+    "colesterol_mg": 0.0,
+    "gordura_saturada_g": 0.432,
+    "gordura_monoinsaturada_g": 1.501,
+    "gordura_poliinsaturada_g": 0.423,
+    "gordura_trans_g": 0.0,
+    "calcio_mg": 15.788,
+    "ferro_mg": 0.735,
+    "sodio_mg": 204.577,
+    "magnesio_mg": 47.599,
+    "fosforo_mg": 92.931,
+    "potassio_mg": 168.898,
+    "zinco_mg": 0.658,
+    "vitamina_a_rae_mcg": 0.0,
+    "vitamina_c_mg": 0.582,
+    "vitamina_e_mg": 0.751,
+    "folato_mcg": 45.175
+  },
+  "por_porcao": {
+    "energia_kcal": 208.529,
+    "umidade_g": 154.169,
+    "carboidrato_total_g": 38.638,
+    "acucares_totais_g": 30.142,
+    "proteina_g": 6.878,
+    "lipidios_g": 4.754,
+    "fibra_alimentar_g": 8.491,
+    "cinzas_g": 2.026,
+    "colesterol_mg": 0.0,
+    "gordura_saturada_g": 0.863,
+    "gordura_monoinsaturada_g": 3.003,
+    "gordura_poliinsaturada_g": 0.845,
+    "gordura_trans_g": 0.0,
+    "calcio_mg": 31.576,
+    "ferro_mg": 1.471,
+    "sodio_mg": 409.154,
+    "magnesio_mg": 95.199,
+    "fosforo_mg": 185.861,
+    "potassio_mg": 337.796,
+    "zinco_mg": 1.316,
+    "vitamina_a_rae_mcg": 0.0,
+    "vitamina_c_mg": 1.165,
+    "vitamina_e_mg": 1.502,
+    "folato_mcg": 90.35
+  },
+  "porcao_g": 200,
+  "rendimento_final_g": 590,
+  "peso_total_ingredientes_g": 609.0,
+  "formulacao": {
+    "sem_acucar_adicionado": true,
+    "sem_sal_adicionado": false,
+    "sem_gordura_adicionada": false
+  },
+  "memoria_calculo": [
+    {
+      "codigo_tbca": "BRC0016A",
+      "nome": "Arroz integral, cozido",
+      "quantidade_g": 300
+    },
+    {
+      "codigo_tbca": "BRC0001T",
+      "nome": "Feijão carioca, cozido (grão+caldo)",
+      "quantidade_g": 250
+    },
+    {
+      "codigo_tbca": "BRC0018B",
+      "nome": "Cebola branca, crua",
+      "quantidade_g": 40
+    },
+    {
+      "codigo_tbca": "BRC0010B",
+      "nome": "Alho, cru",
+      "quantidade_g": 6
+    },
+    {
+      "codigo_tbca": "BRC0002D",
+      "nome": "Azeite de oliva",
+      "quantidade_g": 10
+    },
+    {
+      "codigo_tbca": "BRC0020L",
+      "nome": "Sal refinado",
+      "quantidade_g": 3
+    }
+  ],
+  "avisos": [
+    "Alho, cru (BRC0010B): gordura_monoinsaturada_g traço na TBCA",
+    "Alho, cru (BRC0010B): vitamina_a_rae_mcg traço na TBCA",
+    "Azeite de oliva (BRC0002D): gordura_trans_g ausente na TBCA",
+    "Feijão carioca, cozido (grão+caldo) (BRC0001T): vitamina_a_rae_mcg ausente na TBCA",
+    "Feijão carioca, cozido (grão+caldo) (BRC0001T): vitamina_c_mg traço na TBCA"
+  ],
+  "alegacoes_elegiveis": [
+    {
+      "texto": "Baixo teor de gordura saturada",
+      "base_legal": "IN 75/2020, Anexo XX",
+      "valor_calculado": 0.8631864406779661,
+      "limite": 1.5
+    },
+    {
+      "texto": "Zero gordura trans / não contém",
+      "base_legal": "IN 75/2020, Anexo XX",
+      "valor_calculado": 0.0,
+      "limite": 0.1
+    },
+    {
+      "texto": "Fonte de fibra alimentar",
+      "base_legal": "IN 75/2020, Anexo XX",
+      "valor_calculado": 8.490644067796609,
+      "limite": 2.5
+    },
+    {
+      "texto": "Alto teor / rico em fibra alimentar",
+      "base_legal": "IN 75/2020, Anexo XX",
+      "valor_calculado": 8.490644067796609,
+      "limite": 5.0
+    },
+    {
+      "texto": "Fonte de proteína",
+      "base_legal": "IN 75/2020, Anexo XX",
+      "valor_calculado": 6.878305084745762,
+      "limite": 5.0
+    },
+    {
+      "texto": "Sem adição de açúcares",
+      "base_legal": "IN 75/2020, Anexo XX",
+      "valor_calculado": 0,
+      "limite": 0
+    }
+  ],
+  "versao_tbca": "7.2"
+}

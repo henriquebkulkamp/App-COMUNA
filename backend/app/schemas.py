@@ -46,6 +46,38 @@ class ProdutoSchema(CamelModel):
     tags: list[str] = []
 
 
+# ─── Info nutricional + ingredientes (lib/types.ts: InfoNutricional) ──
+# Só aparecem em GET /api/produtos/{id} (tela de detalhe) — GET
+# /api/produtos (lista/vitrine) continua leve, sem esse join extra que
+# nenhum card usa. Todo campo de nutriente é opcional: NULL = não
+# declarado, e quem exibe (TabelaNutricional.tsx) pula a linha.
+class InfoNutricionalSchema(CamelModel):
+    porcao: str
+    calorias_kcal: float | None = None
+    gorduras_totais_g: float | None = None
+    gorduras_saturadas_g: float | None = None
+    gorduras_trans_g: float | None = None
+    colesterol_mg: float | None = None
+    sodio_mg: float | None = None
+    carboidratos_totais_g: float | None = None
+    fibra_alimentar_g: float | None = None
+    acucares_g: float | None = None
+    proteinas_g: float | None = None
+    vitamina_a_mg: float | None = None
+    vitamina_c_mg: float | None = None
+    calcio_mg: float | None = None
+    ferro_mg: float | None = None
+    potassio_mg: float | None = None
+
+
+class ProdutoDetalheSchema(ProdutoSchema):
+    # Já vem ordenada por `ordem` (ver crud/router) — lista simples de
+    # nomes, igual a `tags`; produto in natura tem 1 item só (o próprio
+    # nome do produto).
+    ingredientes: list[str] = []
+    info_nutricional: InfoNutricionalSchema | None = None
+
+
 # ─── ItemCarrinho (lib/types.ts: ItemCarrinho) ─────────────────
 class ItemCarrinhoSchema(CamelModel):
     produto: ProdutoSchema

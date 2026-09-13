@@ -42,6 +42,38 @@ export interface Produto {
   tags?: string[];      // livres e opcionais — 0, 1 ou várias por produto
 }
 
+// Tabela nutricional de um produto — todo campo opcional (ausente =
+// não declarado no rótulo, ver TabelaNutricional.tsx: a linha some,
+// não vira "0"). Espelha backend/app/schemas.py: InfoNutricionalSchema.
+export interface InfoNutricional {
+  porcao: string;
+  caloriasKcal?: number;
+  gordurasTotaisG?: number;
+  gordurasSaturadasG?: number;
+  gordurasTransG?: number;
+  colesterolMg?: number;
+  sodioMg?: number;
+  carboidratosTotaisG?: number;
+  fibraAlimentarG?: number;
+  acucaresG?: number;
+  proteinasG?: number;
+  vitaminaAMg?: number;
+  vitaminaCMg?: number;
+  calcioMg?: number;
+  ferroMg?: number;
+  potassioMg?: number;
+}
+
+// Produto + o que só a tela de detalhe usa (GET /api/produtos/:id) —
+// a vitrine/carrossel continuam com o `Produto` de sempre, mais leve
+// (GET /api/produtos não faz o join de ingredientes/nutrição).
+export interface ProdutoDetalhe extends Produto {
+  // Já vem ordenada — produto in natura (ex: abacate) tem 1 item só,
+  // igual ao próprio nome do produto.
+  ingredientes: string[];
+  infoNutricional?: InfoNutricional;
+}
+
 // Um item dentro do carrinho de compras
 // É um Produto + a quantidade que o cliente quer
 export interface ItemCarrinho {

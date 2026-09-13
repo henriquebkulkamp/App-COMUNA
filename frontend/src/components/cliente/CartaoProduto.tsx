@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import Container from "@cloudscape-design/components/container";
 import {
   spaceScaledXxxl,
@@ -45,10 +46,17 @@ interface CartaoProdutoProps {
 // 2. Nome do produto reserva sempre a altura de 2 linhas (clamp),
 //    mesmo que o nome caiba em 1. Sem descrição — o nome já basta.
 // 3. Preço fica logo abaixo do nome, sem vão vazio no meio.
+//
+// O card inteiro é um link pra /produto/:id (ver PaginaProduto.tsx) —
+// clicar em qualquer parte (imagem, nome, preço) abre o detalhe. Sem
+// botão próprio aqui: "comprar"/"ver mais" viraria um segundo alvo de
+// clique competindo com o card inteiro, e o produto não tem outra ação
+// além de "ver mais" na vitrine (adicionar ao carrinho é lá dentro).
 // ============================================================
 export default function CartaoProduto({ produto, semMoldura = false }: CartaoProdutoProps) {
   const conteudo = (
     <div
+      className="comuna-cartao-produto"
       style={{
         width: LARGURA_CARTAO,
         height: ALTURA_CARTAO,
@@ -124,6 +132,12 @@ export default function CartaoProduto({ produto, semMoldura = false }: CartaoPro
     </div>
   );
 
-  if (semMoldura) return conteudo;
-  return <Container>{conteudo}</Container>;
+  const linkado = (
+    <Link to={`/produto/${produto.id}`} style={{ display: "block", color: "inherit", textDecoration: "none" }}>
+      {conteudo}
+    </Link>
+  );
+
+  if (semMoldura) return linkado;
+  return <Container>{linkado}</Container>;
 }

@@ -111,6 +111,31 @@ const TAGS_DEMO = {
   "cachaca-socialista": ["Artesanal"],
 };
 
+// Ingredientes + informação nutricional — só num punhado de produtos
+// (mesmo espírito de ESTOQUE_DEMO/TAGS_DEMO: mostrar a variação de
+// verdade, não preencher o catálogo inteiro). Cobre os casos que a
+// tela de detalhe distingue (ver PaginaProduto.tsx/TabelaNutricional.tsx):
+// in natura (abacate, mel, banana-passa — um ingrediente só, o próprio
+// produto) e processado (bolo de mandioca — lista real de ingredientes).
+//
+// NÃO é número digitado à mão: vem de composicao/produtos/saida/produtos_nutricional.json,
+// gerado pelo motor de cálculo real (composicao/lib/calculo.py, base
+// TBCA 7.2 — ver composicao/README.md) a partir das receitas em
+// composicao/produtos/receitas_catalogo.py. Pra adicionar nutrição a
+// um novo produto: achar o código TBCA (lib/tbca.buscar_por_nome),
+// colocar a receita em receitas_catalogo.py, rodar
+// `python3 produtos/gerar_seed_nutricional.py` de dentro de
+// composicao/, e rodar este seed de novo — nada aqui precisa mudar.
+const NUTRICIONAL_JSON_PATH = path.join(RAIZ, "composicao", "produtos", "saida", "produtos_nutricional.json");
+const CATALOGO_NUTRICIONAL = JSON.parse(readFileSync(NUTRICIONAL_JSON_PATH, "utf-8"));
+
+const INGREDIENTES_DEMO = Object.fromEntries(
+  Object.entries(CATALOGO_NUTRICIONAL).map(([id, produto]) => [id, produto.ingredientes])
+);
+const INFO_NUTRICIONAL_DEMO = Object.fromEntries(
+  Object.entries(CATALOGO_NUTRICIONAL).map(([id, produto]) => [id, produto.infoNutricional])
+);
+
 function paraBool(valor) {
   return String(valor).trim().toUpperCase() === "TRUE";
 }
@@ -197,6 +222,59 @@ async function main() {
       if (rowCount) tagsAplicadas++;
     }
 
+    // Ingredientes: idempotente via DELETE + INSERT (não tem uma chave
+    // natural pra ON CONFLICT — a ordem é o que importa, não o texto).
+    let ingredientesAplicados = 0;
+    for (const [id, ingredientes] of Object.entries(INGREDIENTES_DEMO)) {
+      const { rowCount } = await client.query(`DELETE FROM produto_ingredientes WHERE produto_id = $1`, [id]);
+      // Não usa rowCount do DELETE pra decidir se o produto existe (0
+      // linhas apagadas na primeira vez é normal) — confirma via UPDATE
+      // fictício seria mais caro; INSERT abaixo já falha com FK
+      // violation se o id não existir no CSV, o que é sinal suficiente.
+      for (let i = 0; i < ingredientes.length; i++) {
+        await client.query(
+          `INSERT INTO produto_ingredientes (produto_id, nome, ordem) VALUES ($1, $2, $3)`,
+          [id, ingredientes[i], i]
+        );
+      }
+      ingredientesAplicados++;
+    }
+
+    let nutricionalAplicada = 0;
+    for (const [id, info] of Object.entries(INFO_NUTRICIONAL_DEMO)) {
+      await client.query(
+        `INSERT INTO produto_info_nutricional (
+           produto_id, porcao, calorias_kcal, gorduras_totais_g, gorduras_saturadas_g,
+           gorduras_trans_g, colesterol_mg, sodio_mg, carboidratos_totais_g, fibra_alimentar_g,
+           acucares_g, proteinas_g, vitamina_a_mg, vitamina_c_mg, calcio_mg, ferro_mg, potassio_mg
+         )
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+         ON CONFLICT (produto_id) DO UPDATE SET
+           porcao = EXCLUDED.porcao,
+           calorias_kcal = EXCLUDED.calorias_kcal,
+           gorduras_totais_g = EXCLUDED.gorduras_totais_g,
+           gorduras_saturadas_g = EXCLUDED.gorduras_saturadas_g,
+           gorduras_trans_g = EXCLUDED.gorduras_trans_g,
+           colesterol_mg = EXCLUDED.colesterol_mg,
+           sodio_mg = EXCLUDED.sodio_mg,
+           carboidratos_totais_g = EXCLUDED.carboidratos_totais_g,
+           fibra_alimentar_g = EXCLUDED.fibra_alimentar_g,
+           acucares_g = EXCLUDED.acucares_g,
+           proteinas_g = EXCLUDED.proteinas_g,
+           vitamina_a_mg = EXCLUDED.vitamina_a_mg,
+           vitamina_c_mg = EXCLUDED.vitamina_c_mg,
+           calcio_mg = EXCLUDED.calcio_mg,
+           ferro_mg = EXCLUDED.ferro_mg,
+           potassio_mg = EXCLUDED.potassio_mg`,
+        [
+          id, info.porcao, info.caloriasKcal, info.gordurasTotaisG, info.gordurasSaturadasG,
+          info.gordurasTransG, info.colesterolMg, info.sodioMg, info.carboidratosTotaisG, info.fibraAlimentarG,
+          info.acucaresG, info.proteinasG, info.vitaminaAMg, info.vitaminaCMg, info.calcioMg, info.ferroMg, info.potassioMg,
+        ]
+      );
+      nutricionalAplicada++;
+    }
+
     // Configurações padrão — mesmo PIN/WhatsApp que o app usava como fallback.
     // Troque o PIN pelo painel /admin depois do primeiro acesso.
     await client.query(
@@ -212,6 +290,8 @@ async function main() {
     console.log(`✅ Seed concluído: ${inseridos} produtos gravados/atualizados.`);
     console.log(`   Estoque de demonstração aplicado em ${aplicadosDemo} produtos.`);
     console.log(`   Tags de demonstração aplicadas em ${tagsAplicadas} produtos.`);
+    console.log(`   Ingredientes de demonstração aplicados em ${ingredientesAplicados} produtos.`);
+    console.log(`   Info nutricional de demonstração aplicada em ${nutricionalAplicada} produtos.`);
     console.log(`   Configurações padrão: pin=1234 (troque depois!), whatsappNumero=5517992702323`);
   } catch (erro) {
     await client.query("ROLLBACK");
